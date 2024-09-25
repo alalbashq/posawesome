@@ -1,0 +1,341 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2023-11-11 20:02:43.891659",
+ "default_view": "List",
+ "description": "This tool helps you to update or fix the quantity and valuation of stock in the system. It is typically used to synchronise the system values and what actually exists in your warehouses. ",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "is_group",
+  "old_parent",
+  "parent_stock_reconciliation_tool",
+  "company",
+  "branch",
+  "purpose",
+  "employee",
+  "employee_name",
+  "col1",
+  "posting_date",
+  "posting_time",
+  "set_posting_time",
+  "section_break_8",
+  "set_warehouse",
+  "section_break_22",
+  "scan_barcode",
+  "column_break_12",
+  "scan_mode",
+  "new_row",
+  "sb9",
+  "items",
+  "section_break_9",
+  "expense_account",
+  "column_break_13",
+  "difference_amount",
+  "accounting_dimensions_section",
+  "cost_center",
+  "dimension_col_break",
+  "lft",
+  "rgt",
+  "amended_from",
+  "naming_series"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Data",
+   "label": "naming_series",
+   "options": "MAT-RETO.-.DD.-.MM.-.YYYY.-"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_group",
+   "fieldtype": "Check",
+   "in_standard_filter": 1,
+   "label": "Is Group"
+  },
+  {
+   "fieldname": "old_parent",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Old Parent",
+   "options": "Stock Reconciliation Tool",
+   "print_hide": 1,
+   "report_hide": 1
+  },
+  {
+   "depends_on": "eval:doc.is_group ==0",
+   "fieldname": "parent_stock_reconciliation_tool",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Parent Stock Reconciliation Tool",
+   "options": "Stock Reconciliation Tool"
+  },
+  {
+   "fetch_from": "old_parent.company",
+   "fetch_if_empty": 1,
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "remember_last_selected_value": 1,
+   "reqd": 1
+  },
+  {
+   "fetch_from": "old_parent.purpose",
+   "fetch_if_empty": 1,
+   "fieldname": "purpose",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Purpose",
+   "options": "\nOpening Stock\nStock Reconciliation",
+   "reqd": 1
+  },
+  {
+   "fieldname": "col1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Today",
+   "fetch_from": "old_parent.posting_date",
+   "fetch_if_empty": 1,
+   "fieldname": "posting_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Posting Date",
+   "oldfieldname": "reconciliation_date",
+   "oldfieldtype": "Date",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "old_parent.posting_time",
+   "fetch_if_empty": 1,
+   "fieldname": "posting_time",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "Posting Time",
+   "oldfieldname": "reconciliation_time",
+   "oldfieldtype": "Time",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fetch_from": "old_parent.amended_from",
+   "fieldname": "set_posting_time",
+   "fieldtype": "Check",
+   "label": "Edit Posting Date and Time"
+  },
+  {
+   "fieldname": "section_break_8",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fetch_from": "old_parent.set_warehouse",
+   "fieldname": "set_warehouse",
+   "fieldtype": "Link",
+   "label": "Default Warehouse",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:!doc.docstatus",
+   "fieldname": "section_break_22",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval:doc.is_group==0",
+   "fieldname": "scan_barcode",
+   "fieldtype": "Data",
+   "label": "Scan Barcode",
+   "options": "Barcode"
+  },
+  {
+   "fieldname": "column_break_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.is_group==0",
+   "description": "Disables auto-fetching of existing quantity",
+   "fetch_from": "old_parent.scan_mode",
+   "fieldname": "scan_mode",
+   "fieldtype": "Check",
+   "label": "Scan Mode"
+  },
+  {
+   "fieldname": "sb9",
+   "fieldtype": "Section Break"
+  },
+  {
+   "allow_bulk_edit": 1,
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Stock Reconciliation Item Tool",
+   "read_only_depends_on": "eval:doc.is_group==1"
+  },
+  {
+   "fieldname": "section_break_9",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "expense_account",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Difference Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "column_break_13",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.is_group==0",
+   "fieldname": "difference_amount",
+   "fieldtype": "Currency",
+   "label": "Difference Amount",
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "accounting_dimensions_section",
+   "fieldtype": "Section Break",
+   "label": "Accounting Dimensions"
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Cost Center",
+   "options": "Cost Center"
+  },
+  {
+   "fieldname": "dimension_col_break",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "lft",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Left",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "rgt",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Right",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Stock Reconciliation Tool",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.is_group==0",
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee",
+   "mandatory_depends_on": "eval:doc.is_group==0",
+   "options": "Employee"
+  },
+  {
+   "depends_on": "eval:doc.is_group==false",
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "title",
+   "unique": 1
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "new_row",
+   "fieldtype": "Check",
+   "label": "New Row"
+  }
+ ],
+ "icon": "fa fa-upload-alt",
+ "is_submittable": 1,
+ "is_tree": 1,
+ "links": [],
+ "modified": "2024-05-24 22:29:25.824458",
+ "modified_by": "Administrator",
+ "module": "POSAwesome",
+ "name": "Stock Reconciliation Tool",
+ "naming_rule": "By \"Naming Series\" field",
+ "nsm_parent_field": "parent_stock_reconciliation_tool",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Stock Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "POS user",
+   "select": 1,
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "permlevel": 1,
+   "print": 1,
+   "report": 1,
+   "role": "POS user",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "company,posting_date,employee,purpose,posting_date",
+ "show_name_in_global_search": 1,
+ "sort_field": "posting_date",
+ "sort_order": "DESC",
+ "states": []
+}
