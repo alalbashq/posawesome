@@ -1,29 +1,29 @@
 <template>
   <v-row justify="center">
     <v-dialog v-model="dialog" max-width="800px" min-width="800px">
-      <v-card>
-        <v-card-title>
-          <span class="headline primary--text">{{ __('Select Payment') }}</span>
+      <v-card :class="{'rtl': isRTL}">
+        <v-card-title  :class="{'rtl': isRTL}">
+          <span class="headline primary--text"  :class="{'rtl': isRTL}">{{ __('Select Payment') }}</span>
         </v-card-title>
-        <v-container>
+        <v-container  :class="{'rtl': isRTL}">
           <v-row class="mb-4">
             <v-text-field
               color="primary"
-              :label="frappe._('Full Name')"
+              :label="__('Full Name')"
               background-color="white"
               hide-details
               v-model="full_name"
-              dense
+              density="compact"
               clearable
               class="mx-4"
             ></v-text-field>
             <v-text-field
               color="primary"
-              :label="frappe._('Mobile No')"
+              :label="__('Mobile No')"
               background-color="white"
               hide-details
               v-model="mobile_no"
-              dense
+              density="compact"
               clearable
               class="mx-4"
             ></v-text-field>
@@ -37,7 +37,8 @@
                 <v-data-table
                   :headers="headers"
                   :items="dialog_data"
-                  item-key="name"
+                  item-value="name"
+                  return-object
                   class="elevation-1"
                   :single-select="singleSelect"
                   show-select
@@ -56,9 +57,10 @@
         </v-container>
         <v-card-actions class="mt-4">
           <v-spacer></v-spacer>
-          <v-btn color="error mx-2" dark @click="close_dialog">Close</v-btn>
+          <v-btn  :class="{'rtl': isRTL}" color="error mx-2" dark @click="close_dialog">Close</v-btn>
           <v-btn
             v-if="selected.length"
+             :class="{'rtl': isRTL}"
             color="success"
             dark
             @click="submit_dialog"
@@ -74,6 +76,7 @@
 import { evntBus } from '../../bus';
 export default {
   data: () => ({
+    isRTL: false,
     dialog: false,
     singleSelect: true,
     selected: [],
@@ -151,7 +154,7 @@ export default {
           async: false,
           callback: function (r) {
             if (!r.exc) {
-              evntBus.$emit('set_mpesa_payment', r.message);
+              evntBus.emit('set_mpesa_payment', r.message);
               vm.dialog = false;
             }
           },
@@ -162,9 +165,39 @@ export default {
       value = parseFloat(value);
       return value.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
     },
+
+    fetchUserLanguage() {
+      frappe.call({
+        method: "frappe.client.get",
+        args: { doctype: "User", name: frappe.session.user },
+        callback: (response) => {
+          if (response.message) {
+            let userLang = response.message.language;
+            this.applyDirection(userLang);
+          }
+        }
+      });
+    },
+
+    applyDirection(lang) {
+      if (lang === "ar") {
+        this.isRTL = true;
+        document.body.setAttribute("dir", "rtl");
+        document.body.classList.add("rtl");
+      } else {
+        this.isRTL = false;
+        document.body.setAttribute("dir", "ltr");
+        document.body.classList.remove("rtl");
+      }
+    },
   },
+
+  mounted() {
+    this.fetchUserLanguage();
+  },
+
   created: function () {
-    evntBus.$on('open_mpesa_payments', (data) => {
+    evntBus.on('open_mpesa_payments', (data) => {
       this.dialog = true;
       this.full_name = '';
       this.mobile_no = '';
@@ -176,7 +209,28 @@ export default {
     });
   },
   beforeDestroy() {
-    evntBus.$off('open_mpesa_payments');
+    evntBus.off('open_mpesa_payments');
   },
 };
 </script>
+
+<style scoped>
+.rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+.rtl .v-navigation-drawer {
+    left: auto !important;
+    right: 0 !important;
+}
+
+.rtl .v-list {
+    text-align: right;
+}
+
+.rtl .v-btn {
+    float: left;
+}
+
+</style>

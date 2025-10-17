@@ -1,15 +1,15 @@
 <template>
-  <v-row justify="center">
-    <v-dialog v-model="varaintsDialog" max-width="600px">
-      <v-card min-height="500px">
-        <v-card-title>
-          <span class="headline primary--text">Select Item</span>
+  <v-row :class="{'rtl': isRTL}" justify="center">
+    <v-dialog :class="{'rtl': isRTL}" v-model="varaintsDialog" max-width="90%">
+      <v-card :class="{'rtl': isRTL}" min-height="500px">
+        <v-card-title :class="{'rtl': isRTL}">
+          <span :class="{'rtl': isRTL}" class="headline primary--text">Select Item</span>
           <v-spacer></v-spacer>
-          <v-btn color="error" dark @click="close_dialog">Close</v-btn>
+          <v-btn :class="{'rtl': isRTL}" color="error" dark @click="close_dialog">Close</v-btn>
         </v-card-title>
-        <v-card-text class="pa-0">
-          <v-container v-if="parentItem">
-            <div v-for="attr in parentItem.attributes" :key="attr.attribute">
+        <v-card-text :class="{'rtl': isRTL}" class="pa-0">
+          <v-container :class="{'rtl': isRTL}" v-if="parentItem">
+            <div :class="{'rtl': isRTL}" v-for="attr in parentItem.attributes" :key="attr.attribute">
               <v-chip-group
                 v-model="filters[attr.attribute]"
                 active-class="green--text text--accent-4"
@@ -19,7 +19,7 @@
                   v-for="value in attr.values"
                   :key="value.abbr"
                   :value="value.attribute_value"
-                  outlined
+                  variant="outlined"
                   label
                   @click="updateFiltredItems"
                 >
@@ -28,27 +28,24 @@
               </v-chip-group>
               <v-divider class="p-0 m-0"></v-divider>
             </div>
-            <div>
-              <v-row dense class="overflow-y-auto" style="max-height: 500px">
+            <div :class="{'rtl': isRTL}">
+              <v-row density="compact" class="overflow-y-auto" style="max-height: 500px">
                 <v-col
                   v-for="(item, idx) in filterdItems"
                   :key="idx"
-                  xl="2"
+                  xl="3"
                   lg="3"
-                  md="4"
-                  sm="4"
+                  md="6"
+                  sm="6"
                   cols="6"
-                  min-height="50"
+                  min-height="100"
                 >
                   <v-card hover="hover" @click="add_item(item)">
                     <v-img
-                      :src="
-                        item.image ||
-                        '/assets/posawesome/js/posapp/components/pos/placeholder-image.png'
-                      "
+                      :src="item.image || '/assets/posawesome/js/posapp/imgs/Box.png'"
                       class="white--text align-end"
-                      gradient="to bottom, rgba(0,0,0,.2), rgba(0,0,0,.7)"
-                      height="100px"
+                      gradient="to bottom, rgba(0,0,0,.2), rgba(0,0,0,.3)"
+                      height="200px"
                     >
                       <v-card-text
                         v-text="item.item_name"
@@ -57,7 +54,9 @@
                     </v-img>
                     <v-card-text class="text--primary pa-1">
                       <div class="text-caption primary--text accent-3">
-                        {{ item.rate || 0 }} {{ item.currency || '' }}
+                        <div class="flex" style="display: flex;justify-content: space-between;">
+                        <span>{{ item.rate || 0 }} {{ item.currency || '' }}</span> <span> الكمية المتاحة : {{item.actual_qty || 0}}</span>
+                        </div>
                       </div>
                     </v-card-text>
                   </v-card>
@@ -75,6 +74,7 @@
 import { evntBus } from '../../bus';
 export default {
   data: () => ({
+    isRTL: false,
     varaintsDialog: false,
     parentItem: null,
     items: null,
@@ -135,13 +135,43 @@ export default {
       });
     },
     add_item(item) {
-      evntBus.$emit('add_item', item);
+      evntBus.emit('add_item', item);
       this.close_dialog();
+    },
+    fetchUserLanguage() {
+      frappe.call({
+        method: "frappe.client.get",
+        args: { doctype: "User", name: frappe.session.user },
+        callback: (response) => {
+          if (response.message) {
+            let userLang = response.message.language;
+            this.applyDirection(userLang);
+          }
+        }
+      });
+    },
+
+    applyDirection(lang) {
+      if (lang === "ar") {
+        this.isRTL = true;
+        document.body.setAttribute("dir", "rtl");
+        document.body.classList.add("rtl");
+      } else {
+        this.isRTL = false;
+        document.body.setAttribute("dir", "ltr");
+        document.body.classList.remove("rtl");
+      }
     },
   },
 
+  mounted() {
+    this.fetchUserLanguage();
+  },
+
   created: function () {
-    evntBus.$on('open_variants_model', (item, items) => {
+    // evntBus.on('open_variants_model', (item, items) => {
+      // console.log("items from Variants file, created" , items);
+    evntBus.on('open_variants_model', ({ item, items }) => {
       this.varaintsDialog = true;
       this.parentItem = item || null;
       this.items = items;
@@ -153,3 +183,25 @@ export default {
   },
 };
 </script>
+
+
+<style scoped>
+.rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+.rtl .v-navigation-drawer {
+    left: auto !important;
+    right: 0 !important;
+}
+
+.rtl .v-list {
+    text-align: right;
+}
+
+.rtl .v-btn {
+    float: left;
+}
+
+</style>

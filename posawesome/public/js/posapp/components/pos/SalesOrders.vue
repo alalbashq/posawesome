@@ -4,22 +4,23 @@
       <!-- <template v-slot:activator="{ on, attrs }">
               <v-btn color="primary" dark v-bind="attrs" v-on="on">Open Dialog</v-btn>
             </template>-->
-      <v-card>
-        <v-card-title>
+      <v-card :class="{'rtl': isRTL}">
+        <v-card-title :class="{'rtl': isRTL}">
           <span class="headline primary--text">{{
             __("Select Sales Orders")
           }}</span>
         </v-card-title>
         <v-card-text class="pa-0">
-          <v-container>
+          <v-container :class="{'rtl': isRTL}">
             <v-row class="mb-4">
               <v-text-field
+                @keyup.enter="search_orders"
                 color="primary"
-                :label="frappe._('Order ID')"
+                :label="__('Order ID')"
                 background-color="white"
                 hide-details
                 v-model="order_name"
-                dense
+                density="compact"
                 clearable
                 class="mx-4"
               ></v-text-field>
@@ -38,7 +39,8 @@
                   <v-data-table
                     :headers="headers"
                     :items="dialog_data"
-                    item-key="name"
+                    item-value="name"
+                    return-object
                     class="elevation-1"
                     :single-select="singleSelect"
                     show-select
@@ -80,6 +82,7 @@ export default {
   // props: ["draftsDialog"],
   mixins: [format],
   data: () => ({
+    isRTL: false,
     draftsDialog: false,
     singleSelect: true,
     pos_profile: {},
@@ -190,7 +193,7 @@ export default {
             }
           }
         }
-        evntBus.$emit("load_order", this.selected[0]);
+        evntBus.emit("load_order", this.selected[0]);
         this.draftsDialog = false;
         frappe.call({
           method: "posawesome.posawesome.api.posapp.delete_sales_invoice",
@@ -205,9 +208,34 @@ export default {
         });
       }
     },
+
+    fetchUserLanguage() {
+      frappe.call({
+        method: "frappe.client.get",
+        args: { doctype: "User", name: frappe.session.user },
+        callback: (response) => {
+          if (response.message) {
+            let userLang = response.message.language;
+            this.applyDirection(userLang);
+          }
+        }
+      });
+    },
+
+    applyDirection(lang) {
+      if (lang === "ar") {
+        this.isRTL = true;
+        document.body.setAttribute("dir", "rtl");
+        document.body.classList.add("rtl");
+      } else {
+        this.isRTL = false;
+        document.body.setAttribute("dir", "ltr");
+        document.body.classList.remove("rtl");
+      }
+    },
   },
   created: function () {
-    evntBus.$on("open_orders", (data) => {
+    evntBus.on("open_orders", (data) => {
       this.clearSelected();
       this.draftsDialog = true;
       this.dialog_data = data;
@@ -215,9 +243,32 @@ export default {
     });
   },
   mounted() {
-    evntBus.$on("register_pos_profile", (data) => {
+    this.fetchUserLanguage();
+
+    evntBus.on("register_pos_profile", (data) => {
       this.pos_profile = data.pos_profile;
     });
   },
 };
 </script>
+
+<style scoped>
+.rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+.rtl .v-navigation-drawer {
+    left: auto !important;
+    right: 0 !important;
+}
+
+.rtl .v-list {
+    text-align: right;
+}
+
+.rtl .v-btn {
+    float: left;
+}
+
+</style>

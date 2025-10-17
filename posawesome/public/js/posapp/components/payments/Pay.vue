@@ -4,7 +4,7 @@
       <v-col md="8" cols="12" class="pb-2 pr-0">
         <v-card
           class="main mx-auto grey lighten-5 mt-3 p-3 pb-16 overflow-y-auto"
-          style="max-height: 94vh; height: 94vh"
+          style="max-height: 90.8vh; height: 90.8vh"
         >
           <Customer></Customer>
           <v-divider></v-divider>
@@ -32,25 +32,29 @@
             </v-row>
             <v-row align="center" no-gutters class="mb-1">
               <v-col md="4" cols="12">
-                <v-select
-                  dense
-                  outlined
+                <v-autocomplete
+                  :reverse="isRTL"
+                  :class="{ 'text-caption': mdAndDown }"
+                  density="compact"
+                  variant="outlined"
+                  color="primary"
                   hide-details
-                  clearable
                   background-color="white"
+                  prepend-inner-icon="mdi-cash-register"
                   v-model="pos_profile_search"
                   :items="pos_profiles_list"
                   item-value="name"
                   label="Select POS Profile"
-                ></v-select>
+                ></v-autocomplete>
               </v-col>
               <v-col> </v-col>
               <v-col md="3" cols="12">
                 <v-btn
                   block
-                  color="warning"
+                  color="primary"
                   dark
                   @click="get_outstanding_invoices"
+                  style="background-color: black !important;"
                   >{{ __("Search") }}</v-btn
                 >
               </v-col>
@@ -58,8 +62,9 @@
             <v-data-table
               :headers="invoices_headers"
               :items="outstanding_invoices"
-              item-key="name"
-              class="elevation-1 mt-0"
+              item-value="name"
+              return-object
+              class="elevation-1 mt-0 "
               show-select
               v-model="selected_invoices"
               :loading="invoices_loading"
@@ -77,6 +82,7 @@
                 >
               </template>
             </v-data-table>
+
             <v-divider></v-divider>
           </div>
           <div
@@ -109,7 +115,8 @@
             <v-data-table
               :headers="unallocated_payments_headers"
               :items="unallocated_payments"
-              item-key="name"
+              item-value="name"
+              return-object
               class="elevation-1 mt-0"
               :single-select="singleSelect"
               show-select
@@ -152,10 +159,13 @@
             <v-row align="center" no-gutters class="mb-1">
               <v-col md="4" cols="12" class="mr-1">
                 <v-text-field
-                  dense
-                  outlined
+                  :reverse="isRTL"
+                  :class="{ 'text-caption': mdAndDown }"
+                  density="compact"
+                  variant="outlined"
                   color="primary"
-                  :label="frappe._('Search by Name')"
+                  :label="__('Search by Name')"
+                  @focus="e => e.target.select()"
                   background-color="white"
                   hide-details
                   v-model="mpesa_search_name"
@@ -164,10 +174,13 @@
               </v-col>
               <v-col md="4" cols="12" class="mr-1">
                 <v-text-field
-                  dense
-                  outlined
+                  :reverse="isRTL"
+                  :class="{ 'text-caption': mdAndDown }"
+                  density="compact"
+                  variant="outlined"
                   color="primary"
-                  :label="frappe._('Search by Mobile')"
+                  :label="__('Search by Mobile')"
+                  @focus="e => e.target.select()"
                   background-color="white"
                   hide-details
                   v-model="mpesa_search_mobile"
@@ -188,7 +201,8 @@
             <v-data-table
               :headers="mpesa_payment_headers"
               :items="mpesa_payments"
-              item-key="name"
+              item-value="name"
+              return-object
               class="elevation-1 mt-0"
               :single-select="singleSelect"
               show-select
@@ -209,7 +223,7 @@
       <v-col md="4" cols="12" class="pb-3">
         <v-card
           class="invoices mx-auto grey lighten-5 mt-3 p-3"
-          style="max-height: 94vh; height: 94vh"
+          style="max-height: 90.8vh; height: 90.8vh"
         >
           <strong>
             <h4 class="primary--text">Totals</h4>
@@ -219,15 +233,18 @@
               </v-col>
               <v-col md="5">
                 <v-text-field
+                  :reverse="isRTL"
+                  :class="{ 'text-caption': mdAndDown }"
                   class="p-0 m-0"
-                  dense
-                  color="primary"
-                  background-color="white"
-                  hide-details
-                  :value="formtCurrency(total_selected_invoices)"
-                  total_selected_invoices
+                  variant="outlined"
+                  density="compact"
                   readonly
-                  flat
+                  hide-details
+                  color="accent"
+                  :label="__('Total Invoices')"
+                  @focus="e => e.target.select()"
+                  total_selected_invoices
+                  :model-value="formtCurrency(total_selected_invoices)"
                   :prefix="currencySymbol(pos_profile.currency)"
                 ></v-text-field>
               </v-col>
@@ -239,15 +256,18 @@
               >
               <v-col md="5">
                 <v-text-field
+                  :reverse="isRTL"
+                  :class="{ 'text-caption': mdAndDown }"
                   class="p-0 m-0"
-                  dense
-                  color="primary"
-                  background-color="white"
-                  hide-details
-                  :value="formtCurrency(total_selected_payments)"
-                  total_selected_payments
+                  variant="outlined"
+                  density="compact"
                   readonly
-                  flat
+                  hide-details
+                  color="accent"
+                  :label="__('Total Payments')"
+                  @focus="e => e.target.select()"
+                  total_selected_payments
+                  :model-value="formtCurrency(total_selected_payments)"
                   :prefix="currencySymbol(pos_profile.currency)"
                 ></v-text-field>
               </v-col>
@@ -259,21 +279,25 @@
               >
               <v-col md="5">
                 <v-text-field
+                  :reverse="isRTL"
+                  :class="{ 'text-caption': mdAndDown }"
                   class="p-0 m-0"
-                  dense
-                  color="primary"
-                  background-color="white"
-                  hide-details
-                  :value="formtCurrency(total_selected_mpesa_payments)"
-                  total_selected_mpesa_payments
+                  variant="outlined"
+                  density="compact"
                   readonly
-                  flat
+                  hide-details
+                  color="accent"
+                  :label="__('Total Mpesa')"
+                  @focus="e => e.target.select()"
+                  total_selected_mpesa_payments
+                  :value="formtCurrency(total_selected_mpesa_payments)"
                   :prefix="currencySymbol(pos_profile.currency)"
                 ></v-text-field>
               </v-col>
             </v-row>
 
             <v-divider v-if="payment_methods.length"></v-divider>
+            
             <div v-if="pos_profile.posa_allow_make_new_payments">
               <h4 class="primary--text">Make New Payment</h4>
               <v-row
@@ -286,17 +310,20 @@
                 </v-col>
                 <v-col md="5"
                   ><v-text-field
+                    :reverse="isRTL"
+                    :class="{ 'text-caption': mdAndDown }"
                     class="p-0 m-0"
-                    dense
-                    color="primary"
-                    background-color="white"
+                    variant="outlined"
+                    density="compact"
                     hide-details
-                    :value="formtCurrency(method.amount)"
+                    color="accent"
+                    payments_methods
+                    :label="__(method.mode_of_payment)"
+                    :model-value="formtCurrency(method.amount)"
+                    @focus="e => e.target.select()"
                     @change="
                       setFormatedCurrency(method, 'amount', null, true, $event)
                     "
-                    payments_methods
-                    flat
                     :prefix="currencySymbol(pos_profile.currency)"
                   ></v-text-field
                 ></v-col>
@@ -310,15 +337,17 @@
               </v-col>
               <v-col md="5">
                 <v-text-field
+                  :reverse="isRTL"
+                  :class="{ 'text-caption': mdAndDown }"
+                  @focus="e => e.target.select()"
                   class="p-0 m-0"
-                  dense
-                  color="primary"
-                  background-color="white"
-                  hide-details
-                  :value="formtCurrency(total_of_diff)"
-                  total_of_diff
-                  flat
+                  variant="outlined"
+                  density="compact"
                   readonly
+                  hide-details
+                  color="accent"
+                  :label="__('Difference')"
+                  :model-value="formtCurrency(total_of_diff)"
                   :prefix="currencySymbol(pos_profile.currency)"
                 ></v-text-field>
               </v-col>
@@ -339,6 +368,7 @@
 </template>
 
 <script>
+import { useDisplay } from 'vuetify'
 import { evntBus } from "../../bus";
 import format from "../../format";
 import Customer from "../pos/Customer.vue";
@@ -346,8 +376,13 @@ import UpdateCustomer from "../pos/UpdateCustomer.vue";
 
 export default {
   mixins: [format],
+  setup() {
+    const { mdAndDown, lgAndUp } = useDisplay()
+    return { mdAndDown, lgAndUp }
+  },
   data: function () {
     return {
+      isRTL: false,
       dialog: false,
       pos_profile: "",
       pos_opening_shift: "",
@@ -372,108 +407,126 @@ export default {
       mpesa_search_mobile: "",
       invoices_headers: [
         {
+          title: __("Invoice"),
           text: __("Invoice"),
           align: "start",
           sortable: true,
           value: "name",
         },
         {
+          title: __("Customer"),
           text: __("Customer"),
           align: "start",
           sortable: true,
           value: "customer_name",
         },
         {
+          title: __("Date"),
           text: __("Date"),
           align: "start",
           sortable: true,
           value: "posting_date",
         },
         {
+          title: __("Due Date"),
           text: __("Due Date"),
           align: "start",
           sortable: true,
           value: "due_date",
         },
         {
+          title: __("Total"),
           text: __("Total"),
-          align: "end",
+          align: "start",
           sortable: true,
           value: "grand_total",
         },
         {
+          title: __("Outstanding"),
           text: __("Outstanding"),
-          align: "end",
+          align: "start",
           sortable: true,
           value: "outstanding_amount",
         },
       ],
+
       unallocated_payments_headers: [
         {
+          title: __("Payment ID"),
           text: __("Payment ID"),
           align: "start",
           sortable: true,
           value: "name",
         },
         {
+          title: __("Customer"),
           text: __("Customer"),
           align: "start",
           sortable: true,
           value: "customer_name",
         },
         {
+          title: __("Date"),
           text: __("Date"),
           align: "start",
           sortable: true,
           value: "posting_date",
         },
         {
+          title: __("Mode"),
           text: __("Mode"),
           align: "start",
           sortable: true,
           value: "mode_of_payment",
         },
         {
+          title: __("Paid"),
           text: __("Paid"),
-          align: "end",
+          align: "start",
           sortable: true,
           value: "paid_amount",
         },
         {
+          title: __("Unallocated"),
           text: __("Unallocated"),
-          align: "end",
+          align: "start",
           sortable: true,
           value: "unallocated_amount",
         },
       ],
       mpesa_payment_headers: [
         {
+          title: __("Payment ID"),
           text: __("Payment ID"),
           align: "start",
           sortable: true,
           value: "transid",
         },
         {
+          title: __("Full Name"),
           text: __("Full Name"),
           align: "start",
           sortable: true,
           value: "full_name",
         },
         {
+          title: __("Nobile Number"),
           text: __("Nobile Number"),
           align: "start",
           sortable: true,
           value: "mobile_no",
         },
         {
+          title: __("Date"),
           text: __("Date"),
           align: "start",
           sortable: true,
           value: "posting_date",
         },
         {
+          title: __("Amount"),
           text: __("Amount"),
-          align: "end",
+          align: "start",
           sortable: true,
           value: "amount",
         },
@@ -486,6 +539,10 @@ export default {
     UpdateCustomer,
   },
 
+  created() {
+    this.fetchUserLanguage();
+  },  
+
   methods: {
     check_opening_entry() {
       return frappe
@@ -497,8 +554,8 @@ export default {
             this.pos_profile = r.message.pos_profile;
             this.pos_opening_shift = r.message.pos_opening_shift;
             this.company = r.message.company.name;
-            evntBus.$emit("payments_register_pos_profile", r.message);
-            evntBus.$emit("set_company", r.message.company);
+            evntBus.emit("payments_register_pos_profile", r.message);
+            evntBus.emit("set_company", r.message.company);
             this.set_payment_methods();
             this.pos_profile_search = r.message.pos_profile.name;
             this.pos_profiles_list.push(this.pos_profile_search);
@@ -549,15 +606,18 @@ export default {
                 ...message,
               };
               vm.set_mpesa_search_params();
-              evntBus.$emit("set_customer_info_to_edit", vm.customer_info);
+              evntBus.emit("set_customer_info_to_edit", vm.customer_info);
             }
           },
         });
       }
     },
+
     onInvoiceSelected(event) {
-      evntBus.$emit("set_customer", event.item.customer);
+      evntBus.emit("set_customer", event.item.customer);
     },
+
+
     get_outstanding_invoices() {
       this.invoices_loading = true;
       return frappe
@@ -706,6 +766,10 @@ export default {
         this.total_selected_mpesa_payments
       );
 
+
+      console.log("📦 Customer selected:", this.customer_name);
+      console.log("📤 Payload being sent:", payload);
+
       frappe.call({
         method: "posawesome.posawesome.api.payment_entry.process_pos_payment",
         args: { payload },
@@ -724,6 +788,31 @@ export default {
         },
       });
     },
+
+    fetchUserLanguage() {
+      frappe.call({
+        method: "frappe.client.get",
+        args: { doctype: "User", name: frappe.session.user },
+        callback: (response) => {
+          if (response.message) {
+            let userLang = response.message.language;
+            this.applyDirection(userLang);
+          }
+        }
+      });
+    },
+
+    applyDirection(lang) {
+      if (lang === "ar") {
+        this.isRTL = true;
+        document.body.setAttribute("dir", "rtl");
+        document.body.classList.add("rtl");
+      } else {
+        this.isRTL = false;
+        document.body.setAttribute("dir", "ltr");
+        document.body.classList.remove("rtl");
+      }
+    },
   },
 
   computed: {
@@ -739,12 +828,14 @@ export default {
         0
       );
     },
+
     total_selected_invoices() {
       return this.selected_invoices.reduce(
         (acc, cur) => acc + flt(cur.outstanding_amount),
         0
       );
     },
+
     total_selected_payments() {
       return this.selected_payments.reduce(
         (acc, cur) => acc + flt(cur.unallocated_amount),
@@ -774,9 +865,15 @@ export default {
   },
 
   mounted: function () {
+
+    const savedProfile = localStorage.getItem('pos_profile');
+    if (savedProfile) {
+      this.pos_profile = JSON.parse(savedProfile);
+    }
+
     this.$nextTick(function () {
       this.check_opening_entry();
-      evntBus.$on("update_customer", (customer_name) => {
+      evntBus.on("update_customer", (customer_name) => {
         this.clear_all(true);
         this.customer_name = customer_name;
         this.fetch_customer_details();
@@ -784,19 +881,42 @@ export default {
         this.get_unallocated_payments();
         this.get_draft_mpesa_payments_register();
       });
-      evntBus.$on("fetch_customer_details", () => {
+      evntBus.on("fetch_customer_details", () => {
         this.fetch_customer_details();
       });
     });
   },
+
+  // mounted() {
+  //   const savedProfile = localStorage.getItem('pos_profile');
+  //   if (savedProfile) {
+  //     this.pos_profile = JSON.parse(savedProfile);
+  //   }
+
+  //   this.fetchUserLanguage();
+
+  //   this.check_opening_entry();
+  //     evntBus.on("update_customer", (customer_name) => {
+  //       this.clear_all(true);
+  //       this.customer_name = customer_name;
+  //       this.fetch_customer_details();
+  //       this.get_outstanding_invoices();
+  //       this.get_unallocated_payments();
+  //       this.get_draft_mpesa_payments_register();
+  //     });
+  //     evntBus.on("fetch_customer_details", () => {
+  //       this.fetch_customer_details();
+  //     });
+  // },
+
   beforeDestroy() {
-    evntBus.$off("update_customer");
-    evntBus.$off("fetch_customer_details");
+    evntBus.off("update_customer");
+    evntBus.off("fetch_customer_details");
   },
 };
 </script>
 
-<style>
+<style scoped>
 input[total_of_diff] {
   text-align: right;
 }
@@ -811,5 +931,23 @@ input[total_selected_invoices] {
 }
 input[total_selected_mpesa_payments] {
   text-align: right;
+}
+
+.rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+.rtl .v-navigation-drawer {
+  left: auto !important;
+  right: 0 !important;
+}
+
+.rtl .v-list {
+  text-align: right;
+}
+
+.rtl .v-btn {
+  float: left;
 }
 </style>

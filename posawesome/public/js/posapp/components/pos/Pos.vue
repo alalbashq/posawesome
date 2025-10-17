@@ -1,5 +1,5 @@
 <template>
-  <div fluid class="mt-2">
+  <div :class="{'rtl': isRTL}" style="margin-top: 5px;">
     <ClosingDialog></ClosingDialog>
     <Drafts></Drafts>
     <SalesOrders></SalesOrders>
@@ -11,19 +11,19 @@
     <v-row v-show="!dialog">
       <v-col
         v-show="!payment && !offers && !coupons"
-        xl="5"
-        lg="5"
+        xl="6"
+        lg="6"
         md="5"
         sm="5"
         cols="12"
         class="pos pr-0"
       >
-        <ItemsSelector></ItemsSelector>
+        <ItemsSelector ref="itemsSelector"></ItemsSelector>
       </v-col>
       <v-col
         v-show="offers"
-        xl="5"
-        lg="5"
+        xl="6"
+        lg="6"
         md="5"
         sm="5"
         cols="12"
@@ -33,8 +33,8 @@
       </v-col>
       <v-col
         v-show="coupons"
-        xl="5"
-        lg="5"
+        xl="6"
+        lg="6"
         md="5"
         sm="5"
         cols="12"
@@ -42,10 +42,11 @@
       >
         <PosCoupons></PosCoupons>
       </v-col>
+
       <v-col
         v-show="payment"
-        xl="5"
-        lg="5"
+        xl="6"
+        lg="6"
         md="5"
         sm="5"
         cols="12"
@@ -54,7 +55,7 @@
         <Payments></Payments>
       </v-col>
 
-      <v-col xl="7" lg="7" md="7" sm="7" cols="12" class="pos">
+      <v-col xl="6" lg="6" md="7" sm="7" cols="12" class="pos">
         <Invoice></Invoice>
       </v-col>
     </v-row>
@@ -80,12 +81,14 @@ import MpesaPayments from './Mpesa-Payments.vue';
 export default {
   data: function () {
     return {
+      isRTL: false,
       dialog: false,
       pos_profile: '',
       pos_opening_shift: '',
       payment: false,
       offers: false,
       coupons: false,
+      customers: [],
     };
   },
 
@@ -107,6 +110,35 @@ export default {
   },
 
   methods: {
+  // handleKeydown: function (event) {
+  // },
+    handleKeyUp() {
+        // الحصول على العنصر النشط حاليًا
+        const activeElement = document.activeElement;
+
+        // التحقق إذا كان العنصر النشط هو حقل إدخال (input, textarea, أو contenteditable)
+        const isInput =
+          activeElement.tagName === "INPUT" ||
+          activeElement.tagName === "TEXTAREA" ||
+          activeElement.isContentEditable;
+
+        if (isInput) {
+          return;
+        }
+
+        const itemsSelector = this.$refs.itemsSelector;
+        if (itemsSelector) {
+          const debounceSearchInput = itemsSelector.$refs.debounce_search;
+          if (debounceSearchInput) {
+            debounceSearchInput.focus();
+          } else {
+            console.error("العنصر debounce_search غير موجود داخل ItemsSelector.");
+          }
+        } else {
+          console.error("المكون ItemsSelector غير موجود.");
+        }
+    },
+
     check_opening_entry() {
       return frappe
         .call('posawesome.posawesome.api.posapp.check_opening_shift', {
@@ -117,14 +149,15 @@ export default {
             this.pos_profile = r.message.pos_profile;
             this.pos_opening_shift = r.message.pos_opening_shift;
             this.get_offers(this.pos_profile.name);
-            evntBus.$emit('register_pos_profile', r.message);
-            evntBus.$emit('set_company', r.message.company);
+            evntBus.emit('register_pos_profile', r.message);
+            evntBus.emit('set_company', r.message.company);
             console.info('LoadPosProfile');
           } else {
             this.create_opening_voucher();
           }
         });
     },
+    
     create_opening_voucher() {
       this.dialog = true;
     },
@@ -138,7 +171,7 @@ export default {
         )
         .then((r) => {
           if (r.message) {
-            evntBus.$emit('open_ClosingDialog', r.message);
+            evntBus.emit('open_ClosingDialog', r.message);
           } else {
             // console.log(r);
           }
@@ -154,7 +187,7 @@ export default {
         )
         .then((r) => {
           if (r.message) {
-            evntBus.$emit('show_mesage', {
+            evntBus.emit('show_mesage', {
               text: `POS Shift Closed`,
               color: 'success',
             });
@@ -172,64 +205,106 @@ export default {
         .then((r) => {
           if (r.message) {
             console.info('LoadOffers');
-            evntBus.$emit('set_offers', r.message);
+            evntBus.emit('set_offers', r.message);
           }
         });
     },
     get_pos_setting() {
       frappe.db.get_doc('POS Settings', undefined).then((doc) => {
-        evntBus.$emit('set_pos_settings', doc);
+        evntBus.emit('set_pos_settings', doc);
       });
+    },
+
+    fetchUserLanguage() {
+      frappe.call({
+        method: "frappe.client.get",
+        args: { doctype: "User", name: frappe.session.user },
+        callback: (response) => {
+          if (response.message) {
+            let userLang = response.message.language;
+            this.applyDirection(userLang);
+            // this.applyDirection("ar");
+          }
+        }
+      });
+    },
+
+    applyDirection(lang) {
+      if (lang === "ar") {
+        this.isRTL = true;
+        document.body.setAttribute("dir", "rtl");
+        document.body.classList.add("rtl");
+      } else {
+        this.isRTL = false;
+        document.body.setAttribute("dir", "ltr");
+        document.body.classList.remove("rtl");
+      }
     },
   },
 
   mounted: function () {
+    const savedProfile = localStorage.getItem('pos_profile');
+    if (savedProfile) {
+      this.pos_profile = JSON.parse(savedProfile);
+    }
+
+    this.fetchUserLanguage();
+
+    window.addEventListener('keyup', this.handleKeyUp);
     this.$nextTick(function () {
       this.check_opening_entry();
       this.get_pos_setting();
-      evntBus.$on('close_opening_dialog', () => {
+      evntBus.on('close_opening_dialog', () => {
         this.dialog = false;
       });
-      evntBus.$on('register_pos_data', (data) => {
+      evntBus.on('register_pos_data', (data) => {
         this.pos_profile = data.pos_profile;
         this.get_offers(this.pos_profile.name);
         this.pos_opening_shift = data.pos_opening_shift;
-        evntBus.$emit('register_pos_profile', data);
+        evntBus.emit('register_pos_profile', data);
         console.info('LoadPosProfile');
       });
-      evntBus.$on('show_payment', (data) => {
+      evntBus.on('show_payment', (data) => {
         this.payment = true ? data === 'true' : false;
         this.offers = false ? data === 'true' : false;
         this.coupons = false ? data === 'true' : false;
       });
-      evntBus.$on('show_offers', (data) => {
+      evntBus.on('show_offers', (data) => {
         this.offers = true ? data === 'true' : false;
         this.payment = false ? data === 'true' : false;
         this.coupons = false ? data === 'true' : false;
       });
-      evntBus.$on('show_coupons', (data) => {
+      evntBus.on('show_coupons', (data) => {
         this.coupons = true ? data === 'true' : false;
         this.offers = false ? data === 'true' : false;
         this.payment = false ? data === 'true' : false;
       });
-      evntBus.$on('open_closing_dialog', () => {
+      evntBus.on('open_closing_dialog', () => {
         this.get_closing_data();
       });
-      evntBus.$on('submit_closing_pos', (data) => {
+      evntBus.on('submit_closing_pos', (data) => {
         this.submit_closing_pos(data);
       });
     });
   },
-  beforeDestroy() {
-    evntBus.$off('close_opening_dialog');
-    evntBus.$off('register_pos_data');
-    evntBus.$off('LoadPosProfile');
-    evntBus.$off('show_offers');
-    evntBus.$off('show_coupons');
-    evntBus.$off('open_closing_dialog');
-    evntBus.$off('submit_closing_pos');
-  },
+
+  beforeUnmount() {
+    evntBus.off('register_pos_data');
+    evntBus.off('show_payment');
+    evntBus.off('show_offers');
+    evntBus.off('show_coupons');
+    evntBus.off('open_closing_dialog');
+    evntBus.off('submit_closing_pos');
+
+    if (window.onScan) {
+        window.onScan.detachFrom(document);
+    }
+  }
 };
 </script>
 
-<style scoped></style>
+<style >
+.rtl {
+  direction: rtl;
+}
+</style>

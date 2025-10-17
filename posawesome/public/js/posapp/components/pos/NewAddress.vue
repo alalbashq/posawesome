@@ -1,20 +1,20 @@
 <template>
   <v-row justify="center">
     <v-dialog v-model="addressDialog" max-width="600px">
-      <v-card>
-        <v-card-title>
-          <span class="headline primary--text">{{
+      <v-card :class="{'rtl': isRTL}">
+        <v-card-title :class="{'rtl': isRTL}">
+          <span :class="{'rtl': isRTL}" class="headline primary--text">{{
             __('Add New Address')
           }}</span>
         </v-card-title>
         <v-card-text class="pa-0">
-          <v-container>
+          <v-container :class="{'rtl': isRTL}">
             <v-row>
               <v-col cols="12">
                 <v-text-field
-                  dense
+                  density="compact"
                   color="primary"
-                  :label="frappe._('Address Name')"
+                  :label="__('Address Name')"
                   background-color="white"
                   hide-details
                   v-model="address.name"
@@ -22,9 +22,9 @@
               </v-col>
               <v-col cols="12">
                 <v-text-field
-                  dense
+                  density="compact"
                   color="primary"
-                  :label="frappe._('Address Line 1')"
+                  :label="__('Address Line 1')"
                   background-color="white"
                   hide-details
                   v-model="address.address_line1"
@@ -32,9 +32,9 @@
               </v-col>
               <v-col cols="12">
                 <v-text-field
-                  dense
+                  density="compact"
                   color="primary"
-                  :label="frappe._('Address Line 2')"
+                  :label="__('Address Line 2')"
                   background-color="white"
                   hide-details
                   v-model="address.address_line2"
@@ -43,7 +43,7 @@
               <v-col cols="6">
                 <v-text-field
                   label="City"
-                  dense
+                  density="compact"
                   color="primary"
                   background-color="white"
                   hide-details
@@ -53,7 +53,7 @@
               <v-col cols="6">
                 <v-text-field
                   label="State"
-                  dense
+                  density="compact"
                   background-color="white"
                   hide-details
                   v-model="address.state"
@@ -64,10 +64,10 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="error" dark @click="close_dialog">{{
+          <v-btn :class="{'rtl': isRTL}" color="error" dark @click="close_dialog">{{
             __('Close')
           }}</v-btn>
-          <v-btn color="success" dark @click="submit_dialog">{{
+          <v-btn :class="{'rtl': isRTL}" color="success" dark @click="submit_dialog">{{
             __('Submit')
           }}</v-btn>
         </v-card-actions>
@@ -80,6 +80,7 @@
 import { evntBus } from '../../bus';
 export default {
   data: () => ({
+    isRTL: false,
     addressDialog: false,
     address: {},
     customer: '',
@@ -101,8 +102,8 @@ export default {
         },
         callback: (r) => {
           if (!r.exc) {
-            evntBus.$emit('add_the_new_address', r.message);
-            evntBus.$emit('show_mesage', {
+            evntBus.emit('add_the_new_address', r.message);
+            evntBus.emit('show_mesage', {
               text: 'Customer Address created successfully.',
               color: 'success',
             });
@@ -113,12 +114,62 @@ export default {
         },
       });
     },
+    fetchUserLanguage() {
+      frappe.call({
+        method: "frappe.client.get",
+        args: { doctype: "User", name: frappe.session.user },
+        callback: (response) => {
+          if (response.message) {
+            let userLang = response.message.language;
+            this.applyDirection(userLang);
+          }
+        }
+      });
+    },
+
+    applyDirection(lang) {
+      if (lang === "ar") {
+        this.isRTL = true;
+        document.body.setAttribute("dir", "rtl");
+        document.body.classList.add("rtl");
+      } else {
+        this.isRTL = false;
+        document.body.setAttribute("dir", "ltr");
+        document.body.classList.remove("rtl");
+      }
+    },
   },
+
+  mounted() {
+    this.fetchUserLanguage();
+  },
+
   created: function () {
-    evntBus.$on('open_new_address', (data) => {
+    evntBus.on('open_new_address', (data) => {
       this.addressDialog = true;
       this.customer = data;
     });
   },
 };
 </script>
+
+<style scoped>
+.rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+.rtl .v-navigation-drawer {
+    left: auto !important;
+    right: 0 !important;
+}
+
+.rtl .v-list {
+    text-align: right;
+}
+
+.rtl .v-btn {
+    float: left;
+}
+
+</style>
