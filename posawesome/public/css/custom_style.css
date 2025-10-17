@@ -1,0 +1,124 @@
+.v-table > .v-table__wrapper > table > tbody > tr > td,
+.v-table > .v-table__wrapper > table > tbody > tr > th,
+.v-table > .v-table__wrapper > table > tfoot > tr > td,
+.v-table > .v-table__wrapper > table > tfoot > tr > th,
+.v-table > .v-table__wrapper > table > thead > tr > td,
+.v-table > .v-table__wrapper > table > thead > tr > th {
+    padding: unset !important;
+}
+
+  .v-data-table .v-field {
+    --v-field-padding-start: 0 !important;
+    --v-field-padding-end: 0 !important;
+}
+
+  .rtl .v-data-table .v-field {
+    --v-field-padding-start: 0 !important;
+    --v-field-padding-end: 6px !important;
+
+}
+
+.v-data-table .v-field__input {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  text-align: left !important;
+}
+
+.rtl .v-data-table .v-field__input {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  text-align: right !important;
+}
+
+.rtl .v-text-field--prefixed.v-text-field .v-field__input  {
+  text-align: right !important;
+  padding-right: 10px !important;
+}
+
+.rtl .v-text-field--prefixed.v-text-field {
+  text-align: center !important;
+}
+
+.v-text-field .v-field--active input {
+  padding-right: 5px !important;
+  padding-left: 5px !important;
+
+}
+
+.rtl .v-text-field .v-field--active input {
+  text-align: right !important;
+  padding-right: 5px !important;
+  padding-left: 5px !important;
+
+}
+
+.rtl .v-text-field .v-field--no-label input  {
+  text-align: right !important;
+}
+
+.rtl .field__field label {
+  text-align: right !important;
+}
+
+.rtl .v-text-field__prefix {
+  padding-right: 17px !important;
+    padding-left: 0 !important;
+}
+
+.v-data-table .v-text-field {
+  --v-input-control-height: 25px !important;}
+
+.v-data-table .v-input--density-compact2 .v-field {
+  --v-field-padding-start: 0 !important;
+  --v-field-padding-end: 0 !important;
+}
+.v-table--density-default {
+    --v-table-header-height: 32px;
+    --v-table-row-height: 32px;
+}
+
+.v-table--density-default {
+    --v-table-header-height: 29px !important;
+    --v-table-row-height:29px !important;
+}
+.v-table>.v-table__wrapper>table>tbody>tr>td, .v-table>.v-table__wrapper>table>tbody>tr>th, .v-table>.v-table__wrapper>table>tfoot>tr>td, .v-table>.v-table__wrapper>table>tfoot>tr>th, .v-table>.v-table__wrapper>table>thead>tr>td, .v-table>.v-table__wrapper>table>thead>tr>th
+ {
+    padding: 0px 2px 3px 3px !important;
+    transition-duration: .28s;
+    transition-property: box-shadow, opacity, background, height;
+    transition-timing-function: cubic-bezier(.4,0,.2,1);
+}
+
+
+.v-table--density-default {
+    --v-table-header-height: 29px !important;
+    --v-table-row-height:29px !important;
+}
+.v-table>.v-table__wrapper>table>tbody>tr>td, .v-table>.v-table__wrapper>table>tbody>tr>th, .v-table>.v-table__wrapper>table>tfoot>tr>td, .v-table>.v-table__wrapper>table>tfoot>tr>th, .v-table>.v-table__wrapper>table>thead>tr>td, .v-table>.v-table__wrapper>table>thead>tr>th
+ {
+    padding: 0px 2px 3px 3px !important;
+    transition-duration: .28s;
+    transition-property: box-shadow, opacity, background, height;
+    transition-timing-function: cubic-bezier(.4,0,.2,1);
+}
+
+.v-text-field .v-field--active input, .v-text-field .v-field--no-label input {
+    opacity: 1;
+    font-size: 15px !important;
+    padding: 0 6px !important;
+    margin: 0px !important;
+    min-height: 30px !important;
+    height: 20px !important;
+}
+.v-field__field {   
+    min-height: 30px !important;
+    height: 30px !important; 
+}
+.v-input--density-compact .v-field--no-label, .v-input--density-compact .v-field--single-line, .v-input--density-compact .v-field--variant-outlined {
+    --v-field-padding-bottom: 0 !important;
+}
+.v-text-field .v-field--active input, .v-text-field .v-field--no-label input {
+    opacity: 1;
+    font-size: 15px !important;
+    padding: 0 6px !important;
+}

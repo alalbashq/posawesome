@@ -15,7 +15,6 @@ from erpnext.accounts.party import get_party_bank_account
 from erpnext.stock.doctype.batch.batch import (
     get_batch_no,
     get_batch_qty,
-    set_batch_nos,
 )
 from erpnext.accounts.doctype.payment_request.payment_request import (
     get_dummy_message,
@@ -305,7 +304,7 @@ def get_items(
                         fields=["attribute", "attribute_value"],
                         filters={"parent": item.item_code, "parentfield": "attributes"},
                     )
-                if posa_display_items_in_stock and (
+                if posa_display_items_in_stock and not item_attributes and (
                     not item_stock_qty or item_stock_qty < 0
                 ):
                     pass
@@ -399,28 +398,29 @@ def get_child_nodes(group_type, root):
 
 def get_customer_group_condition(pos_profile):
     cond = "disabled = 0"
-    customer_groups = get_customer_groups(pos_profile)
-    if customer_groups:
-        cond = " customer_group in (%s)" % (", ".join(["%s"] * len(customer_groups)))
-
-    return cond % tuple(customer_groups)
+    if pos_profile.get("customer_groups"):      
+        customer_groups = get_customer_groups(pos_profile)
+        if customer_groups:
+            cond = " customer_group in (%s)" % (", ".join(["%s"] * len(customer_groups)))
+            return cond % tuple(customer_groups)
+    return cond
 
 
 @frappe.whitelist()
 def get_customer_names(pos_profile):
-    _pos_profile = json.loads(pos_profile)
+    _pos_profile = frappe.get_doc("POS Profile", pos_profile)
     ttl = _pos_profile.get("posa_server_cache_duration")
     if ttl:
         ttl = int(ttl) * 60
-
+   
     @redis_cache(ttl=ttl or 1800)
     def __get_customer_names(pos_profile):
         return _get_customer_names(pos_profile)
 
-    def _get_customer_names(pos_profile):
-        pos_profile = json.loads(pos_profile)
+    def _get_customer_names(pos_profile):        
         condition = ""
         condition += get_customer_group_condition(pos_profile)
+       
         customers = frappe.db.sql(
             """
             SELECT name, mobile_no, email_id, tax_id, customer_name, primary_address
@@ -432,12 +432,13 @@ def get_customer_names(pos_profile):
             ),
             as_dict=1,
         )
+        
         return customers
 
     if _pos_profile.get("posa_use_server_cache"):
-        return __get_customer_names(pos_profile)
+        return __get_customer_names(_pos_profile)
     else:
-        return _get_customer_names(pos_profile)
+        return _get_customer_names(_pos_profile)
 
 
 @frappe.whitelist()
@@ -572,7 +573,6 @@ def submit_invoice(invoice, data):
                 "Company", invoice_doc.company, "default_cash_account"
             )
         }
-
     # creating advance payment
     if data.get("credit_change"):
         advance_payment_entry = frappe.get_doc(
@@ -619,8 +619,8 @@ def submit_invoice(invoice, data):
 
     payments = invoice_doc.payments
 
-    if frappe.get_value("POS Profile", invoice_doc.pos_profile, "posa_auto_set_batch"):
-        set_batch_nos(invoice_doc, "warehouse", throw=True)
+    # if frappe.get_value("POS Profile", invoice_doc.pos_profile, "posa_auto_set_batch"):
+    #     set_batch_nos(invoice_doc, "warehouse", throw=True)
     set_batch_nos_for_bundels(invoice_doc, "warehouse", throw=True)
 
     invoice_doc.flags.ignore_permissions = True
@@ -911,10 +911,9 @@ def get_items_details(pos_profile, items_data):
             for item in items_data:
                 item_code = item.get("item_code")
                 item_stock_qty = get_stock_availability(item_code, warehouse)
-                has_batch_no, has_serial_no = frappe.get_value(
+                (has_batch_no, has_serial_no) = frappe.db.get_value(
                     "Item", item_code, ["has_batch_no", "has_serial_no"]
                 )
-
                 uoms = frappe.get_all(
                     "UOM Conversion Detail",
                     filters={"parent": item_code},
@@ -1040,8 +1039,8 @@ def create_customer(
     customer_name,
     company,
     pos_profile_doc,
-    tax_id=None,
-    mobile_no=None,
+    mobile_no,
+    tax_id=None,    
     email_id=None,
     referral_code=None,
     birthday=None,
@@ -1815,3 +1814,22 @@ def get_sales_invoice_child_table(sales_invoice, sales_invoice_item):
         "Sales Invoice Item", {"parent": parent_doc.name, "name": sales_invoice_item}
     )
     return child_doc
+
+@frappe.whitelist()
+def get_customer_names1():     
+        customers = frappe.db.sql(
+            """
+            SELECT name, mobile_no, email_id, tax_id, customer_name, primary_address
+            FROM `tabCustomer`           
+            ORDER by name
+            """,
+            as_dict=1,
+        )
+        res = []
+        for c in customers:
+            res.append({
+                "title": c.customer_name or c.name,
+                "value": c.name,
+                "raw": c
+            })
+        return customers    

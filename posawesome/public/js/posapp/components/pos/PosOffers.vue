@@ -1,86 +1,94 @@
 <template>
-  <div>
+  <div :class="{'rtl': isRTL}">
     <v-card
+      :class="{'rtl': isRTL}"
       class="selection mx-auto grey lighten-5"
       style="max-height: 80vh; height: 80vh"
     >
-      <v-card-title>
-        <span class="text-h6 primary--text">{{ __('Offers') }}</span>
+      <v-card-title :class="{'rtl': isRTL}">
+        <span :class="{'rtl': isRTL}" class="text-h6 primary--text">{{ __('Offers') }}</span>
       </v-card-title>
-      <div class="my-0 py-0 overflow-y-auto" style="max-height: 75vh">
-        <template @mouseover="style = 'cursor: pointer'">
-          <v-data-table
-            :headers="items_headers"
-            :items="pos_offers"
-            :single-expand="singleExpand"
-            :expanded.sync="expanded"
-            show-expand
-            item-key="row_id"
-            class="elevation-1"
-            :items-per-page="itemsPerPage"
-            hide-default-footer
-          >
-            <template v-slot:item.offer_applied="{ item }">
-              <v-simple-checkbox
-                @click="forceUpdateItem"
+      <div :class="{'rtl': isRTL}" class="my-0 py-0 overflow-y-auto" style="max-height: 75vh">
+        <v-data-table
+          :headers="items_headers"
+          :items="pos_offers"
+          :single-expand="singleExpand"
+          v-model:expanded="expanded"
+          show-expand
+          item-value="row_id"
+          return-object
+          class="elevation-1"
+          :class="{'rtl': isRTL}"
+          :items-per-page="itemsPerPage"
+          hide-default-footer
+        >
+          <template #item.offer_applied="{ item }">
+            <div style="width: 100%; height: 100%; display: flex; align-items: center;">
+              <v-checkbox
+                @click.stop="forceUpdateItem"
                 v-model="item.offer_applied"
-                :disabled="
-                  (item.offer == 'Give Product' &&
-                    !item.give_item &&
-                    (!offer.replace_cheapest_item || !offer.replace_item)) ||
-                  (item.offer == 'Grand Total' &&
-                    discount_percentage_offer_name &&
-                    discount_percentage_offer_name != item.name)
-                "
-              ></v-simple-checkbox>
-            </template>
-            <template v-slot:expanded-item="{ headers, item }">
-              <td :colspan="headers.length">
+                class="ma-0 pa-0"
+                density="compact"
+                hide-details
+                style="margin-inline-start: auto; margin-inline-end: auto;"
+                :disabled="(item.offer == 'Give Product' &&
+                            !item.give_item &&
+                            (!offer.replace_cheapest_item || !offer.replace_item)) ||
+                          (item.offer == 'Grand Total' &&
+                            discount_percentage_offer_name &&
+                            discount_percentage_offer_name != item.name)"
+              ></v-checkbox>
+            </div>
+          </template>
+
+
+
+          <template #expanded-row="{ item, columns }">
+            <tr>
+              <td :colspan="columns.length">
                 <v-row class="mt-2">
                   <v-col v-if="item.description">
-                    <div
-                      class="primary--text"
-                      v-html="handleNewLine(item.description)"
-                    ></div>
+                    <div class="primary--text" v-html="handleNewLine(item.description)"></div>
                   </v-col>
                   <v-col v-if="item.offer == 'Give Product'">
                     <v-autocomplete
                       v-model="item.give_item"
                       :items="get_give_items(item)"
-                      item-text="item_code"
-                      outlined
-                      dense
+                      item-title="item_code"
+                      variant="outlined"
+                      density="compact"
                       color="primary"
-                      :label="frappe._('Give Item')"
-                      :disabled="
-                        item.apply_type != 'Item Group' ||
-                        item.replace_item ||
-                        item.replace_cheapest_item
-                      "
+                      :label="__('Give Item')"
+                      :disabled="item.apply_type != 'Item Group' ||
+                                item.replace_item ||
+                                item.replace_cheapest_item"
                     ></v-autocomplete>
                   </v-col>
                 </v-row>
               </td>
-            </template>
-          </v-data-table>
-        </template>
+            </tr>
+          </template>
+        </v-data-table>
       </div>
+
     </v-card>
 
     <v-card
+      :class="{'rtl': isRTL}"
       flat
       style="max-height: 11vh; height: 11vh"
       class="cards mb-0 mt-3 py-0"
     >
-      <v-row align="start" no-gutters>
+      <v-row :class="{'rtl': isRTL}" align="start" no-gutters>
         <v-col cols="12">
           <v-btn
             block
             class="pa-1"
             large
-            color="warning"
+            color="primary"
             dark
             @click="back_to_invoice"
+            style="background-color: black !important;"
             >{{ __('Back') }}</v-btn
           >
         </v-col>
@@ -95,6 +103,7 @@ import format from '../../format';
 export default {
   mixins: [format],
   data: () => ({
+    isRTL: false,
     loading: false,
     pos_profile: '',
     pos_offers: [],
@@ -104,10 +113,10 @@ export default {
     expanded: [],
     singleExpand: true,
     items_headers: [
-      { text: __('Name'), value: 'name', align: 'start' },
-      { text: __('Apply On'), value: 'apply_on', align: 'start' },
-      { text: __('Offer'), value: 'offer', align: 'start' },
-      { text: __('Applied'), value: 'offer_applied', align: 'start' },
+      { title: __('Name'), key: 'name', align: 'start' },
+      { title: __('Apply On'), key: 'apply_on', align: 'start' },
+      { title: __('Offer'), key: 'offer', align: 'start' },
+      { title: __('Applied'), key: 'offer_applied', align: 'start' },
     ],
   }),
 
@@ -122,7 +131,7 @@ export default {
 
   methods: {
     back_to_invoice() {
-      evntBus.$emit('show_offers', 'false');
+      evntBus.emit('show_offers', 'false');
     },
     forceUpdateItem() {
       let list_offers = [];
@@ -200,9 +209,9 @@ export default {
             newOffer.give_item = this.get_give_items(newOffer)[0].item_code;
           }
           this.pos_offers.push(newOffer);
-          evntBus.$emit('show_mesage', {
+          evntBus.emit('show_mesage', {
             text: __('New Offer Available'),
-            color: 'warning',
+            color: 'info',
           });
         }
       });
@@ -216,7 +225,7 @@ export default {
       const applyedOffers = this.pos_offers.filter(
         (offer) => offer.offer_applied
       );
-      evntBus.$emit('update_invoice_offers', applyedOffers);
+      evntBus.emit('update_invoice_offers', applyedOffers);
     },
     handleNewLine(str) {
       if (str) {
@@ -247,7 +256,7 @@ export default {
       }
     },
     updateCounters() {
-      evntBus.$emit('update_offers_counters', {
+      evntBus.emit('update_offers_counters', {
         offersCount: this.offersCount,
         appliedOffersCount: this.appliedOffersCount,
       });
@@ -256,8 +265,36 @@ export default {
       const applyedOffers = this.pos_offers.filter(
         (offer) => offer.offer_applied && offer.coupon_based
       );
-      evntBus.$emit('update_pos_coupons', applyedOffers);
+      evntBus.emit('update_pos_coupons', applyedOffers);
     },
+    fetchUserLanguage() {
+      frappe.call({
+        method: "frappe.client.get",
+        args: { doctype: "User", name: frappe.session.user },
+        callback: (response) => {
+          if (response.message) {
+            let userLang = response.message.language;
+            this.applyDirection(userLang);
+          }
+        }
+      });
+    },
+
+    applyDirection(lang) {
+      if (lang === "ar") {
+        this.isRTL = true;
+        document.body.setAttribute("dir", "rtl");
+        document.body.classList.add("rtl");
+      } else {
+        this.isRTL = false;
+        document.body.setAttribute("dir", "ltr");
+        document.body.classList.remove("rtl");
+      }
+    },
+  },
+
+  mounted() {
+    this.fetchUserLanguage();
   },
 
   watch: {
@@ -273,24 +310,45 @@ export default {
 
   created: function () {
     this.$nextTick(function () {
-      evntBus.$on('register_pos_profile', (data) => {
+      evntBus.on('register_pos_profile', (data) => {
         this.pos_profile = data.pos_profile;
       });
     });
-    evntBus.$on('update_customer', (customer) => {
+    evntBus.on('update_customer', (customer) => {
       if (this.customer != customer) {
         this.offers = [];
       }
     });
-    evntBus.$on('update_pos_offers', (data) => {
+    evntBus.on('update_pos_offers', (data) => {
       this.updatePosOffers(data);
     });
-    evntBus.$on('update_discount_percentage_offer_name', (data) => {
+    evntBus.on('update_discount_percentage_offer_name', (data) => {
       this.discount_percentage_offer_name = data.value;
     });
-    evntBus.$on('set_all_items', (data) => {
+    evntBus.on('set_all_items', (data) => {
       this.allItems = data;
     });
   },
 };
 </script>
+
+<style scoped>
+.rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+.rtl .v-navigation-drawer {
+    left: auto !important;
+    right: 0 !important;
+}
+
+.rtl .v-list {
+    text-align: right;
+}
+
+.rtl .v-btn {
+    float: left;
+}
+
+</style>

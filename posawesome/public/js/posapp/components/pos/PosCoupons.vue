@@ -1,20 +1,22 @@
 <template>
-  <div>
+  <div :class="{'rtl': isRTL}">
     <v-card
+      :class="{'rtl': isRTL}"
       class="selection mx-auto grey lighten-5"
       style="max-height: 80vh; height: 80vh"
     >
-      <v-card-title>
-        <v-row no-gutters align="center" justify="center">
+      <v-card-title :class="{'rtl': isRTL}">
+        <v-row :class="{'rtl': isRTL}" no-gutters align="center" justify="center">
           <v-col cols="6">
             <span class="text-h6 primary--text">{{ __('Coupons') }}</span>
           </v-col>
           <v-col cols="4">
             <v-text-field
-              dense
-              outlined
+              @keyup.enter="add_coupon(new_coupon)"
+              density="compact"
+              variant="outlined"
               color="primary"
-              :label="frappe._('Coupon')"
+              :label="__('Coupon')"
               background-color="white"
               hide-details
               v-model="new_coupon"
@@ -24,7 +26,7 @@
           <v-col cols="2">
             <v-btn
               class="pa-1"
-              color="success"
+              color="info"
               dark
               @click="add_coupon(new_coupon)"
               >{{ __('add') }}</v-btn
@@ -32,30 +34,30 @@
           </v-col>
         </v-row>
       </v-card-title>
-      <div class="my-0 py-0 overflow-y-auto" style="max-height: 75vh">
-        <template @mouseover="style = 'cursor: pointer'">
-          <v-data-table
-            :headers="items_headers"
-            :items="posa_coupons"
-            :single-expand="singleExpand"
-            :expanded.sync="expanded"
-            item-key="coupon"
-            class="elevation-1"
-            :items-per-page="itemsPerPage"
-            hide-default-footer
-          >
-            <template v-slot:item.applied="{ item }">
-              <v-simple-checkbox
-                v-model="item.applied"
-                disabled
-              ></v-simple-checkbox>
-            </template>
-          </v-data-table>
-        </template>
+      <div :class="{'rtl': isRTL}" class="my-0 py-0 overflow-y-auto" style="max-height: 75vh">
+        <v-data-table
+          :headers="items_headers"
+          :items="posa_coupons"
+          :single-expand="singleExpand"
+          :expanded.sync="expanded"
+          item-value="coupon"
+          return-object
+          class="elevation-1"
+          :items-per-page="itemsPerPage"
+          hide-default-footer
+        >
+          <template v-slot:item.applied="{ item }">
+            <v-checkbox
+              v-model="item.applied"
+              disabled
+            ></v-checkbox>
+          </template>
+        </v-data-table>
       </div>
     </v-card>
 
     <v-card
+      :class="{'rtl': isRTL}"
       flat
       style="max-height: 11vh; height: 11vh"
       class="cards mb-0 mt-3 py-0"
@@ -66,8 +68,9 @@
             block
             class="pa-1"
             large
-            color="warning"
+            color="primary"
             dark
+            style="background-color: black !important;"
             @click="back_to_invoice"
             >{{ __('Back') }}</v-btn
           >
@@ -81,6 +84,7 @@
 import { evntBus } from '../../bus';
 export default {
   data: () => ({
+    isRTL: false,
     loading: false,
     pos_profile: '',
     customer: '',
@@ -88,11 +92,12 @@ export default {
     new_coupon: null,
     itemsPerPage: 1000,
     singleExpand: true,
+    expanded: [],
     items_headers: [
-      { text: __('Coupon'), value: 'coupon_code', align: 'start' },
-      { text: __('Type'), value: 'type', align: 'start' },
-      { text: __('Offer'), value: 'pos_offer', align: 'start' },
-      { text: __('Applied'), value: 'applied', align: 'start' },
+      { title: __('Coupon'), key: 'coupon_code', align: 'start' },
+      { title: __('Type'), key: 'type', align: 'start' },
+      { title: __('Offer'), key: 'pos_offer', align: 'start' },
+      { title: __('Applied'), key: 'applied', align: 'start' },
     ],
   }),
 
@@ -107,7 +112,7 @@ export default {
 
   methods: {
     back_to_invoice() {
-      evntBus.$emit('show_coupons', 'false');
+      evntBus.emit('show_coupons', 'false');
     },
     add_coupon(new_coupon) {
       if (!this.customer || !new_coupon) return;
@@ -115,7 +120,7 @@ export default {
         (el) => el.coupon_code == new_coupon
       );
       if (exist) {
-        evntBus.$emit('show_mesage', {
+        evntBus.emit('show_mesage', {
           text: __('This coupon already used !'),
           color: 'error',
         });
@@ -133,7 +138,7 @@ export default {
           if (r.message) {
             const res = r.message;
             if (res.msg != 'Apply' || !res.coupon) {
-              evntBus.$emit('show_mesage', {
+              evntBus.emit('show_mesage', {
                 text: res.msg,
                 color: 'error',
               });
@@ -192,14 +197,42 @@ export default {
       );
     },
     updateInvoice() {
-      evntBus.$emit('update_invoice_coupons', this.posa_coupons);
+      evntBus.emit('update_invoice_coupons', this.posa_coupons);
     },
     updateCounters() {
-      evntBus.$emit('update_coupons_counters', {
+      evntBus.emit('update_coupons_counters', {
         couponsCount: this.couponsCount,
         appliedCouponsCount: this.appliedCouponsCount,
       });
     },
+    fetchUserLanguage() {
+      frappe.call({
+        method: "frappe.client.get",
+        args: { doctype: "User", name: frappe.session.user },
+        callback: (response) => {
+          if (response.message) {
+            let userLang = response.message.language;
+            this.applyDirection(userLang);
+          }
+        }
+      });
+    },
+
+    applyDirection(lang) {
+      if (lang === "ar") {
+        this.isRTL = true;
+        document.body.setAttribute("dir", "rtl");
+        document.body.classList.add("rtl");
+      } else {
+        this.isRTL = false;
+        document.body.setAttribute("dir", "ltr");
+        document.body.classList.remove("rtl");
+      }
+    },
+  },
+
+  mounted() {
+    this.fetchUserLanguage();
   },
 
   watch: {
@@ -214,11 +247,11 @@ export default {
 
   created: function () {
     this.$nextTick(function () {
-      evntBus.$on('register_pos_profile', (data) => {
+      evntBus.on('register_pos_profile', (data) => {
         this.pos_profile = data.pos_profile;
       });
     });
-    evntBus.$on('update_customer', (customer) => {
+    evntBus.on('update_customer', (customer) => {
       if (this.customer != customer) {
         const to_remove = [];
         this.posa_coupons.forEach((el) => {
@@ -235,12 +268,33 @@ export default {
       }
       this.setActiveGiftCoupons();
     });
-    evntBus.$on('update_pos_coupons', (data) => {
+    evntBus.on('update_pos_coupons', (data) => {
       this.updatePosCoupons(data);
     });
-    evntBus.$on('set_pos_coupons', (data) => {
+    evntBus.on('set_pos_coupons', (data) => {
       this.posa_coupons = data;
     });
   },
 };
 </script>
+
+<style scoped>
+.rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+.rtl .v-navigation-drawer {
+    left: auto !important;
+    right: 0 !important;
+}
+
+.rtl .v-list {
+    text-align: right;
+}
+
+.rtl .v-btn {
+    float: left;
+}
+
+</style>

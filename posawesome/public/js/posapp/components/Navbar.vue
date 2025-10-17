@@ -1,136 +1,101 @@
 <template>
   <nav>
-    <v-app-bar app height="40" class="elevation-2">
-      <v-app-bar-nav-icon
-        @click.stop="drawer = !drawer"
-        class="grey--text"
-      ></v-app-bar-nav-icon>
-      <v-img
-        src="/assets/posawesome/js/posapp/components/pos/pos.png"
-        alt="POS Awesome"
-        max-width="32"
-        class="mr-2"
-        color="primary"
-      ></v-img>
-      <v-toolbar-title
-        @click="go_desk"
-        style="cursor: pointer"
-        class="text-uppercase primary--text"
+    <v-app-bar :class="{'rtl': isRTL}" app height="40">
+      <v-list-item
+        v-for="listItem in items"
+        :key="listItem.text"
+        @click="changePage(listItem.text)"
       >
-        <span class="font-weight-light">pos</span>
-        <span>awesome</span>
-      </v-toolbar-title>
+        <v-icon style="font-size: 30px; margin-left: 20px; margin-right: 20px; padding: 0;" color="black" :title="listItem.text">{{ listItem.icon }}</v-icon>
+      </v-list-item>
+
+
 
       <v-spacer></v-spacer>
-      <v-btn style="cursor: unset" text color="primary">
+      <v-btn
+        icon
+        variant="text"
+        color="primary"
+        :title="__('Go to Desk')"
+        style="color: black !important;"
+        @click="go_desk"
+      >
+        <v-icon>mdi-home</v-icon>
+      </v-btn>
+      <!-- <v-btn
+        icon
+        variant="outlined"
+        color="primary"
+        :title="__('الاصناف الاكثر مبيعا')"
+        style="color: black !important;"
+        @click="go_desk"
+      >
+      الاصناف الاكثر مبيعا
+      </v-btn>
+      <v-btn
+        icon        
+        variant="outlined"
+        color="primary"
+        :title="__('الاصناف الاقل مبيعا')"
+        style="color: black !important;"
+        @click="go_desk"
+      >     
+        الاصناف الاقل مبيعا
+      </v-btn> -->
+
+      <v-btn style="cursor: unset" variant="text" color="black">
         <span right>{{ pos_profile.name }}</span>
       </v-btn>
       <div class="text-center">
-        <v-menu offset-y>
-          <template v-slot:activator="{ on, attrs }">
-            <v-btn color="primary" dark text v-bind="attrs" v-on="on"
-              >Menu</v-btn
-            >
+        <v-menu offset="y">
+          <template v-slot:activator="{ props }">
+            <v-btn color="black" dark variant="text" v-bind="props">
+              Menu
+            </v-btn>
           </template>
           <v-card class="mx-auto" max-width="300" tile>
-            <v-list dense>
-              <v-list-item-group v-model="menu_item" color="primary">
-                <v-list-item
-                  @click="close_shift_dialog"
-                  v-if="!pos_profile.posa_hide_closing_shift && item == 0"
-                >
-                  <v-list-item-icon>
-                    <v-icon>mdi-content-save-move-outline</v-icon>
-                  </v-list-item-icon>
-                  <v-list-item-content>
-                    <v-list-item-title>{{
-                      __('Close Shift')
-                    }}</v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-                <v-list-item
-                  @click="print_last_invoice"
-                  v-if="
-                    pos_profile.posa_allow_print_last_invoice &&
-                    this.last_invoice
-                  "
-                >
-                  <v-list-item-icon>
-                    <v-icon>mdi-printer</v-icon>
-                  </v-list-item-icon>
-                  <v-list-item-content>
-                    <v-list-item-title>{{
-                      __('Print Last Invoice')
-                    }}</v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-                <v-divider class="my-0"></v-divider>
-                <v-list-item @click="logOut">
-                  <v-list-item-icon>
-                    <v-icon>mdi-logout</v-icon>
-                  </v-list-item-icon>
-                  <v-list-item-content>
-                    <v-list-item-title>{{ __('Logout') }}</v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-                <v-list-item @click="go_about">
-                  <v-list-item-icon>
-                    <v-icon>mdi-information-outline</v-icon>
-                  </v-list-item-icon>
-                  <v-list-item-content>
-                    <v-list-item-title>{{ __('About') }}</v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-              </v-list-item-group>
+            <v-list density="compact" v-model="menu_item">
+
+
+              
+              <v-list-item
+                @click="close_shift_dialog"
+                v-if="!pos_profile.posa_hide_closing_shift && menu_item == 0"
+              >
+                <v-icon class="mr-2">mdi-content-save-move-outline</v-icon>
+                <span>{{ __('Close Shift') }}</span>
+              </v-list-item>
+
+
+
+              <v-list-item
+                @click="print_last_invoice"
+                v-if="pos_profile.posa_allow_print_last_invoice && this.last_invoice"
+              >
+                <v-icon class="mr-2">mdi-printer</v-icon>
+                <span>{{ __('Print Last Invoice') }}</span>
+              </v-list-item>
+              <v-divider class="my-0"></v-divider>
+              <v-list-item @click="logOut">
+                <v-icon class="mr-2">mdi-logout</v-icon>
+                <span>{{ __('Logout') }}</span>
+              </v-list-item>
+              <v-list-item @click="go_about">
+                <v-icon class="mr-2">mdi-information-outline</v-icon>
+                <span>{{ __('About') }}</span>
+              </v-list-item>
             </v-list>
           </v-card>
         </v-menu>
       </div>
     </v-app-bar>
-    <v-navigation-drawer
-      v-model="drawer"
-      :mini-variant.sync="mini"
-      app
-      class="primary margen-top"
-      width="170"
-    >
-      <v-list dark>
-        <v-list-item class="px-2">
-          <v-list-item-avatar>
-            <v-img :src="company_img"></v-img>
-          </v-list-item-avatar>
 
-          <v-list-item-title>{{ company }}</v-list-item-title>
-
-          <v-btn icon @click.stop="mini = !mini">
-            <v-icon>mdi-chevron-left</v-icon>
-          </v-btn>
-        </v-list-item>
-        <!-- <MyPopup/> -->
-        <v-list-item-group v-model="item" color="white">
-          <v-list-item
-            v-for="item in items"
-            :key="item.text"
-            @click="changePage(item.text)"
-          >
-            <v-list-item-icon>
-              <v-icon v-text="item.icon"></v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title v-text="item.text"></v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list-item-group>
-      </v-list>
-    </v-navigation-drawer>
     <v-snackbar v-model="snack" :timeout="5000" :color="snackColor" top right>
       {{ snackText }}
     </v-snackbar>
     <v-dialog v-model="freeze" persistent max-width="290">
       <v-card>
-        <v-card-title class="text-h5">
-          {{ freezeTitle }}
-        </v-card-title>
+        <v-card-title class="text-h5">{{ freezeTitle }}</v-card-title>
         <v-card-text>{{ freezeMsg }}</v-card-text>
       </v-card>
     </v-dialog>
@@ -139,11 +104,12 @@
 
 <script>
 import { evntBus } from '../bus';
-
+import Payments from './pos/Payments.vue';
 export default {
-  // components: {MyPopup},
+  components: {Payments},
   data() {
     return {
+      isRTL: false,
       drawer: false,
       mini: true,
       item: 0,
@@ -170,10 +136,12 @@ export default {
     changePage(key) {
       this.$emit('changePage', key);
     },
+    
     go_desk() {
       frappe.set_route('/');
       location.reload();
     },
+
     go_about() {
       const win = window.open(
         'https://github.com/yrestom/POS-Awesome',
@@ -182,7 +150,7 @@ export default {
       win.focus();
     },
     close_shift_dialog() {
-      evntBus.$emit('open_closing_dialog');
+      evntBus.emit('open_closing_dialog');
     },
     show_mesage(data) {
       this.snack = true;
@@ -227,19 +195,49 @@ export default {
         true
       );
     },
+
+    fetchUserLanguage() {
+      frappe.call({
+        method: "frappe.client.get",
+        args: { doctype: "User", name: frappe.session.user },
+        callback: (response) => {
+          if (response.message) {
+            let userLang = response.message.language;
+            this.applyDirection(userLang);
+          }
+        }
+      });
+    },
+
+    applyDirection(lang) {
+      if (lang === "ar") {
+        this.isRTL = true;
+        document.body.setAttribute("dir", "rtl");
+        document.body.classList.add("rtl");
+      } else {
+        this.isRTL = false;
+        document.body.setAttribute("dir", "ltr");
+        document.body.classList.remove("rtl");
+      }
+    }
   },
+  mounted: function () {
+    this.fetchUserLanguage();
+  },
+
   created: function () {
     this.$nextTick(function () {
-      evntBus.$on('show_mesage', (data) => {
+      evntBus.on('show_mesage', (data) => {
         this.show_mesage(data);
       });
-      evntBus.$on('set_company', (data) => {
+      evntBus.on('set_company', (data) => {
         this.company = data.name;
         this.company_img = data.company_logo
           ? data.company_logo
           : this.company_img;
       });
-      evntBus.$on('register_pos_profile', (data) => {
+      
+      evntBus.on('register_pos_profile', (data) => {
         this.pos_profile = data.pos_profile;
         const payments = { text: 'Payments', icon: 'mdi-cash-register' };
         if (
@@ -249,15 +247,16 @@ export default {
           this.items.push(payments);
         }
       });
-      evntBus.$on('set_last_invoice', (data) => {
+      
+      evntBus.on('set_last_invoice', (data) => {
         this.last_invoice = data;
       });
-      evntBus.$on('freeze', (data) => {
+      evntBus.on('freeze', (data) => {
         this.freeze = true;
         this.freezeTitle = data.title;
         this.freezeMsg = data.msg;
       });
-      evntBus.$on('unfreeze', () => {
+      evntBus.on('unfreeze', () => {
         this.freeze = false;
         this.freezTitle = '';
         this.freezeMsg = '';
@@ -270,5 +269,9 @@ export default {
 <style scoped>
 .margen-top {
   margin-top: 0px;
+}
+
+.rtl {
+  direction: rtl;
 }
 </style>

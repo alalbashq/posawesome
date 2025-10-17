@@ -1,46 +1,50 @@
 <template>
   <v-row justify="center">
     <v-dialog v-model="draftsDialog" max-width="900px">
-      <!-- <template v-slot:activator="{ on, attrs }">
-        <v-btn color="primary" dark v-bind="attrs" v-on="on">Open Dialog</v-btn>
-      </template>-->
-      <v-card>
-        <v-card-title>
-          <span class="headline primary--text">{{
+      <v-card :class="{'rtl': isRTL}">
+        <v-card-title  :class="{'rtl': isRTL}">
+          <span class="headline primary--text"  :class="{'rtl': isRTL}">{{
             __('Select Hold Invoice')
           }}</span>
         </v-card-title>
         <v-card-text class="pa-0">
-          <v-container>
+          <v-container :class="{'rtl': isRTL}">
             <v-row no-gutters>
               <v-col cols="12" class="pa-1">
-                <template>
-                  <v-data-table
-                    :headers="headers"
-                    :items="dialog_data"
-                    item-key="name"
-                    class="elevation-1"
-                    :single-select="singleSelect"
-                    show-select
-                    v-model="selected"
-                  >
-                    <template v-slot:item.posting_time="{ item }">
-                      {{ item.posting_time.split('.')[0] }}
-                    </template>
-                    <template v-slot:item.grand_total="{ item }">
-                      {{ currencySymbol(item.currency) }}
-                      {{ formtCurrency(item.grand_total) }}
-                    </template>
-                  </v-data-table>
-                </template>
+
+                <v-data-table
+                  :headers="headers"
+                  :items="dialog_data"
+                  item-value="name"
+                  class="elevation-1"
+                >
+
+                  <template v-slot:[`item.select`]="{ item }">
+                    <v-btn
+                      title="Select"
+                      icon
+                      @click="submit_dialog(item)"
+                      style="width: 30px; height: 30px; margin-top: 5px;  margin-right: 20px;"
+                    >
+                      <v-icon style="font-size: 30px; color: #000;">mdi-check</v-icon>
+                    </v-btn>
+                  </template>
+
+                  <template v-slot:[`item.posting_time`]="{ item }">
+                    {{ item.posting_time.split('.')[0] }}
+                  </template>
+                  <template v-slot:[`item.grand_total`]="{ item }">
+                    {{ currencySymbol(item.currency) }}
+                    {{ formtCurrency(item.grand_total) }}
+                  </template>
+                </v-data-table>
               </v-col>
             </v-row>
           </v-container>
         </v-card-text>
-        <v-card-actions>
+        <v-card-actions :class="{'rtl': isRTL}">
           <v-spacer></v-spacer>
-          <v-btn color="error" dark @click="close_dialog">Close</v-btn>
-          <v-btn color="success" dark @click="submit_dialog">Select</v-btn>
+          <v-btn :class="{'rtl': isRTL}" color="error" dark @click="close_dialog">Close</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -54,38 +58,40 @@ export default {
   // props: ["draftsDialog"],
   mixins: [format],
   data: () => ({
+    isRTL: false,
     draftsDialog: false,
     singleSelect: true,
     selected: [],
     dialog_data: {},
     headers: [
+      { title: __("Select"), key: "select", align: "end" },
       {
-        text: __('Customer'),
-        value: 'customer_name',
+        title: __('Customer'),
+        key: 'customer_name',
         align: 'start',
         sortable: true,
       },
       {
-        text: __('Date'),
+        title: __('Date'),
         align: 'start',
         sortable: true,
-        value: 'posting_date',
+        key: 'posting_date',
       },
       {
-        text: __('Time'),
+        title: __('Time'),
         align: 'start',
         sortable: true,
-        value: 'posting_time',
+        key: 'posting_time',
       },
       {
-        text: __('Invoice'),
-        value: 'name',
+        title: __('Invoice'),
+        key: 'name',
         align: 'start',
         sortable: true,
       },
       {
-        text: __('Amount'),
-        value: 'grand_total',
+        title: __('Amount'),
+        key: 'grand_total',
         align: 'end',
         sortable: false,
       },
@@ -97,18 +103,69 @@ export default {
       this.draftsDialog = false;
     },
 
-    submit_dialog() {
-      if (this.selected.length > 0) {
-        evntBus.$emit('load_invoice', this.selected[0]);
-        this.draftsDialog = false;
+
+    submit_dialog(item) {
+      evntBus.emit('load_invoice', item);
+      this.draftsDialog = false;
+    },
+
+    fetchUserLanguage() {
+      frappe.call({
+        method: "frappe.client.get",
+        args: { doctype: "User", name: frappe.session.user },
+        callback: (response) => {
+          if (response.message) {
+            let userLang = response.message.language;
+            this.applyDirection(userLang);
+          }
+        }
+      });
+    },
+
+    applyDirection(lang) {
+      if (lang === "ar") {
+        this.isRTL = true;
+        document.body.setAttribute("dir", "rtl");
+        document.body.classList.add("rtl");
+      } else {
+        this.isRTL = false;
+        document.body.setAttribute("dir", "ltr");
+        document.body.classList.remove("rtl");
       }
     },
   },
+
+  mounted() {
+    this.fetchUserLanguage();
+  },
+
   created: function () {
-    evntBus.$on('open_drafts', (data) => {
+    evntBus.on('open_drafts', (data) => {
       this.draftsDialog = true;
       this.dialog_data = data;
     });
   },
 };
 </script>
+
+<style scoped>
+.rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+.rtl .v-navigation-drawer {
+    left: auto !important;
+    right: 0 !important;
+}
+
+.rtl .v-list {
+    text-align: right;
+}
+
+.rtl .v-btn {
+    float: left;
+}
+
+</style>
+

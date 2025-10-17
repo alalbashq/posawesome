@@ -13,16 +13,24 @@ from posawesome.posawesome.api.posapp import get_company_domain
 from posawesome.posawesome.doctype.delivery_charges.delivery_charges import (
     get_applicable_delivery_charges,
 )
-
+from erpnext.controllers.sales_and_purchase_return import validate_return
 
 def validate(doc, method):
+    doc.custom_return_reason = "عدم رغبة العميل في الشراء"
     validate_shift(doc)
     set_patient(doc)
     auto_set_delivery_charges(doc)
-    calc_delivery_charges(doc)
+    calc_delivery_charges(doc) 
+    if doc.is_return and doc.update_stock:
+        validate_return(doc)
+        returned = frappe.get_list(doc.doctype, filters={"docstatus":1, "return_against":doc.name})
+        if returned:
+            frappe.throw("لا يمكن ان تعمل مرتجع لهذة الفاتورة لانه يوجد لها مرتجع غير معتمد من قبل"+ " : "+ str([inv.name for inv in returned]))
 
 
 def before_submit(doc, method):
+    if doc.is_return and doc.update_stock:
+        validate_return(doc)
     add_loyalty_point(doc)
     create_sales_order(doc)
     update_coupon(doc, "used")

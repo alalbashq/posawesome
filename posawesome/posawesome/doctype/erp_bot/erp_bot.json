@@ -1,0 +1,61 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-04-29 20:14:25.827912",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "chat",
+  "attach",
+  "send",
+  "result"
+ ],
+ "fields": [
+  {
+   "fieldname": "chat",
+   "fieldtype": "Small Text",
+   "label": "Chat"
+  },
+  {
+   "fieldname": "send",
+   "fieldtype": "Button",
+   "label": "Send"
+  },
+  {
+   "fieldname": "result",
+   "fieldtype": "Text",
+   "label": "result",
+   "read_only": 1
+  },
+  {
+   "fieldname": "attach",
+   "fieldtype": "Attach",
+   "label": "Attach"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-05-11 20:59:52.382681",
+ "modified_by": "Administrator",
+ "module": "posawesome",
+ "name": "ERP Bot",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
