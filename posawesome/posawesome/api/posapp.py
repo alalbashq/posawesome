@@ -423,8 +423,8 @@ def get_customer_names(pos_profile):
        
         customers = frappe.db.sql(
             """
-            SELECT name, mobile_no, email_id, tax_id, customer_name, primary_address
-            FROM `tabCustomer`
+            SELECT name, mobile_no, email_id, tax_id, customer_name, primary_address, territory
+            FROM `tabCustomer` 
             WHERE {0}
             ORDER by name
             """.format(
