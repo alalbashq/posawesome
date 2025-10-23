@@ -1180,10 +1180,10 @@ def set_customer_info(customer, fieldname, value=""):
 
     if contact:
         contact_doc = frappe.get_doc("Contact", contact)
-        if fieldname == "email_id":
+        if fieldname == "email_id" and value:
             contact_doc.set("email_ids", [{"email_id": value, "is_primary": 1}])
             frappe.db.set_value("Customer", customer, "email_id", value)
-        elif fieldname == "mobile_no":
+        elif fieldname == "mobile_no" and value:
             contact_doc.set("phone_nos", [{"phone": value, "is_primary_mobile_no": 1}])
             frappe.db.set_value("Customer", customer, "mobile_no", value)
         contact_doc.save()
@@ -1193,10 +1193,10 @@ def set_customer_info(customer, fieldname, value=""):
         contact_doc.first_name = customer
         contact_doc.is_primary_contact = 1
         contact_doc.is_billing_contact = 1
-        if fieldname == "mobile_no":
+        if fieldname == "mobile_no" and value:
             contact_doc.add_phone(value, is_primary_mobile_no=1, is_primary_phone=1)
 
-        if fieldname == "email_id":
+        if fieldname == "email_id" and value:
             contact_doc.add_email(value, is_primary=1)
 
         contact_doc.append("links", {"link_doctype": "Customer", "link_name": customer})

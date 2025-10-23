@@ -100,4 +100,21 @@ export default {
     float: left;
 }
 
+.v-input--density-compact
+ {
+    --v-input-padding-top: 2px !important;
+}
+.v-text-field__prefix, .v-text-field__suffix {
+    align-items: center;
+    color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
+    cursor: default;
+    display: flex
+;
+    min-height: max(var(--v-input-control-height, 56px), 1.5rem + var(--v-field-input-padding-top) + var(--v-field-input-padding-bottom));
+    opacity: 0;
+    padding-bottom: var(--v-field-padding-bottom, 6px);
+    padding-top: 3px;
+    transition: inherit;
+    white-space: nowrap;
+}
 </style>

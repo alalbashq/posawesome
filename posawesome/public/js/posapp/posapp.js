@@ -2,6 +2,7 @@ import { createApp } from 'vue';
 import Home from './Home.vue';
 import { createVuetify } from 'vuetify';
 import 'vuetify/styles';
+import MobileGCCInput from "./components/pos/MobileGCCInput.vue"
 
 import {
   // Layout
@@ -223,6 +224,7 @@ frappe.PosApp.posapp = class {
         });
 
         const app = createApp(Home);
+        app.component("MobileGCCInput", MobileGCCInput)
 
         app.use(vuetify);
         SetVueGlobals(app);
