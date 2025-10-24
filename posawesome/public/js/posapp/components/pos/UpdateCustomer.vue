@@ -28,7 +28,7 @@
 
               <!-- مكوّن الجوال مع التقاط صلاحية الرقم -->
               <v-col cols="12">
-                <MobileGCCInput
+                <MobileGCCInput 
                   v-model="mobile_no"
                   emitFormat="whatsapp"
                   :label="__('Mobile Number')"
@@ -36,6 +36,7 @@
                   color="primary"
                   variant="outlined"
                   :required="true"
+                  :defaultCountry="defualt_country"
                   @valid="mobile_valid = $event"        
                   @update:whats="mobile_whats = $event" 
                   @update:country="mobile_country = $event"
@@ -151,7 +152,7 @@ export default {
     mobile_valid: false,   // true إذا الرقم صحيح من MobileGCCInput
     mobile_whats: '',      // cc + local (بدون +)
     mobile_country: '',    // ISO الدولة المختارة
-
+    defualt_country: '',
     email_id: '',
     referral_code: '',
     birthday: null,
@@ -320,7 +321,7 @@ export default {
   },
 
   created() {
-    evntBus.on('open_update_customer', (data) => {
+    evntBus.on('open_update_customer',async (data) => {
       this.customerDialog = true;
       if (data) {
         this.customer_name   = data.customer_name;
@@ -328,15 +329,21 @@ export default {
         this.tax_id          = data.tax_id;
         this.mobile_no       = data.mobile_no;
         this.email_id        = data.email_id;
-        this.referral_code   = data.referral_code;
+        this.referral_code   = data.referral_code; 
         this.birthday        = data.birthday;
         this.group           = data.customer_group;
         this.territory       = data.territory;
         this.loyalty_points  = data.loyalty_points;
         this.loyalty_program = data.loyalty_program;
         this.gender          = data.gender;
-
-        // عند فتح للتعديل: اجعل التحقق مبدئيًا بحسب القيمة الحالية (قد يكون MobileGCCInput يحدّثه تلقائيًا)
+        if(this.pos_profile?.defualt_country){
+          var defualt_country = await frappe.db.get_value("Country", this.pos_profile?.defualt_country, "code");
+          console.log(defualt_country)
+          if(defualt_country?.message?.code)
+           this.defualt_country  = defualt_country?.message?.code.toLocaleUpperCase();
+        }
+       
+        // عند فتح للتعديل: اجعل التحقق مبدئيًا  بحسب القيمة الحالية (قد يكون MobileGCCInput يحدّثه تلقائيًا)
         this.mobile_valid = !!this.mobile_no; // سيصحّحه المكوّن عند أول re-emit
       }
     });

@@ -1,68 +1,33 @@
 <template>
   <div :class="{ 'rtl': isRTL }">
-    <v-card :class="{ 'rtl': isRTL }" class="selection mx-auto grey lighten-5 pa-1" style="max-height: 76vh; height: 76vh">
+    <v-card :class="{ 'rtl': isRTL }" class="selection mx-auto grey lighten-5 pa-1"
+      style="max-height: 76vh; height: 76vh">
       <v-progress-linear :active="loading" :indeterminate="loading" absolute top color="info"></v-progress-linear>
       <div :class="{ 'rtl': isRTL }" class="overflow-y-auto px-2 pt-2" style="max-height: 75vh">
         <v-row :class="{ 'rtl': isRTL }" v-if="invoice_doc" class="px-1 py-0">
           <v-col cols="7">
-            <v-text-field
-              variant="outlined"
-              color="primary"
-              :label="__('Paid Amount')"
-              @focus="e => e.target.select()"
-              background-color="white"
-              hide-details
-              :model-value="formtCurrency(total_payments)"
-              readonly
-              :prefix="currencySymbol(invoice_doc.currency)"
-              density="compact"
-            />
+            <v-text-field variant="outlined" color="primary" :label="__('Paid Amount')" @focus="e => e.target.select()"
+              background-color="white" hide-details :model-value="formtCurrency(total_payments)" readonly
+              :prefix="currencySymbol(invoice_doc.currency)" density="compact" />
           </v-col>
           <v-col cols="5">
-            <v-text-field
-              variant="outlined"
-              color="primary"
-              :label="__(diff_lable)"
-              @focus="e => e.target.select()"
-              background-color="white"
-              hide-details
-              :model-value="formtCurrency(diff_payment)"
-              readonly
-              :prefix="currencySymbol(invoice_doc.currency)"
-              density="compact"
-            />
+            <v-text-field variant="outlined" color="primary" :label="__(diff_lable)" @focus="e => e.target.select()"
+              background-color="white" hide-details :model-value="formtCurrency(diff_payment)" readonly
+              :prefix="currencySymbol(invoice_doc.currency)" density="compact" />
           </v-col>
 
           <v-col cols="7" v-if="diff_payment < 0 && !invoice_doc.is_return">
-            <v-text-field
-              variant="outlined"
-              color="primary"
-              :label="__('Paid Change')"
-              @focus="e => e.target.select()"
-              background-color="white"
-              v-model="paid_change"
-              @input="set_paid_change()"
-              :prefix="currencySymbol(invoice_doc.currency)"
-              :rules="paid_change_rules"
-              density="compact"
-              readonly
-              type="number"
-            />
+            <v-text-field variant="outlined" color="primary" :label="__('Paid Change')" @focus="e => e.target.select()"
+              background-color="white" v-model="paid_change" @input="set_paid_change()"
+              :prefix="currencySymbol(invoice_doc.currency)" :rules="paid_change_rules" density="compact" readonly
+              type="number" />
           </v-col>
 
           <v-col cols="5" v-if="diff_payment < 0 && !invoice_doc.is_return">
-            <v-text-field
-              variant="outlined"
-              color="primary"
-              :label="__('Credit Change')"
-              @focus="e => e.target.select()"
-              background-color="white"
-              hide-details
-              :model-value="formtCurrency(credit_change)"
-              readonly
-              :prefix="currencySymbol(invoice_doc.currency)"
-              density="compact"
-            />
+            <v-text-field variant="outlined" color="primary" :label="__('Credit Change')"
+              @focus="e => e.target.select()" background-color="white" hide-details
+              :model-value="formtCurrency(credit_change)" readonly :prefix="currencySymbol(invoice_doc.currency)"
+              density="compact" />
           </v-col>
         </v-row>
         <v-divider></v-divider>
@@ -70,28 +35,17 @@
         <div :class="{ 'rtl': isRTL }" v-if="is_cashback">
           <v-row class="pyments px-1 py-0" v-for="payment in invoice_doc.payments" :key="payment.name">
             <v-col cols="6" v-if="!is_mpesa_c2b_payment(payment)">
-              <v-text-field
-                density="compact"
-                variant="outlined"
-                color="primary"
-                :label="__(payment.mode_of_payment)"
-                background-color="white"
-                hide-details
-                :model-value="formtCurrency(payment.amount)"
-                @change="setFormatedCurrency(payment, 'amount', null, true, $event)"
-                :rules="[isNumber]"
+              <v-text-field density="compact" variant="outlined" color="primary" :label="__(payment.mode_of_payment)"
+                background-color="white" hide-details :model-value="formtCurrency(payment.amount)"
+                @change="setFormatedCurrency(payment, 'amount', null, true, $event)" :rules="[isNumber]"
                 :prefix="currencySymbol(invoice_doc.currency)"
                 @focus="e => { set_rest_amount(payment.idx); e.target.select(); }"
-                :readonly="invoice_doc.is_return ? true : false"
-              />
+                :readonly="invoice_doc.is_return ? true : false" />
             </v-col>
-            <v-col
-              v-if="!is_mpesa_c2b_payment(payment)"
-              :cols="6
-                ? (payment.type != 'Phone' || payment.amount == 0 || !request_payment_field) &&
-                !is_mpesa_c2b_payment(payment)
-                : 3"
-            >
+            <v-col v-if="!is_mpesa_c2b_payment(payment)" :cols="6
+              ? (payment.type != 'Phone' || payment.amount == 0 || !request_payment_field) &&
+              !is_mpesa_c2b_payment(payment)
+              : 3">
               <v-btn block color="primary" dark @click="set_full_amount(payment.idx)">
                 {{ payment.mode_of_payment }}
               </v-btn>
@@ -102,199 +56,86 @@
               </v-btn>
             </v-col>
             <v-col v-if="payment.type == 'Phone' && payment.amount > 0 && request_payment_field" :cols="3" class="pl-1">
-              <v-btn
-                block
-                color="success"
-                dark
-                :disabled="payment.amount == 0"
-                @click="(phone_dialog = true), (payment.amount = flt(payment.amount, 0))"
-              >
+              <v-btn block color="success" dark :disabled="payment.amount == 0"
+                @click="(phone_dialog = true), (payment.amount = flt(payment.amount, 0))">
                 {{ __("Request") }}
               </v-btn>
             </v-col>
           </v-row>
         </div>
 
-        <v-row
-          :class="{ 'rtl': isRTL }"
-          class="pyments px-1 py-0"
-          v-if="invoice_doc && available_pioints_amount > 0 && !invoice_doc.is_return"
-        >
+        <v-row :class="{ 'rtl': isRTL }" class="pyments px-1 py-0"
+          v-if="invoice_doc && available_pioints_amount > 0 && !invoice_doc.is_return">
           <v-col cols="7">
-            <v-text-field
-              density="compact"
-              variant="outlined"
-              color="primary"
-              :label="__('Redeem Loyalty Points')"
-              background-color="white"
-              hide-details
-              v-model="loyalty_amount"
-              type="number"
-              :prefix="currencySymbol(invoice_doc.currency)"
-            />
+            <v-text-field density="compact" variant="outlined" color="primary" :label="__('Redeem Loyalty Points')"
+              background-color="white" hide-details v-model="loyalty_amount" type="number"
+              :prefix="currencySymbol(invoice_doc.currency)" />
           </v-col>
           <v-col cols="5">
-            <v-text-field
-              density="compact"
-              variant="outlined"
-              color="primary"
-              :label="__('You can redeem upto')"
-              background-color="white"
-              hide-details
-              :model-value="formtFloat(available_pioints_amount)"
-              :prefix="currencySymbol(invoice_doc.currency)"
-              disabled
-            />
+            <v-text-field density="compact" variant="outlined" color="primary" :label="__('You can redeem upto')"
+              background-color="white" hide-details :model-value="formtFloat(available_pioints_amount)"
+              :prefix="currencySymbol(invoice_doc.currency)" disabled />
           </v-col>
         </v-row>
 
-        <v-row
-          :class="{ 'rtl': isRTL }"
-          class="pyments px-1 py-0"
-          v-if="invoice_doc && available_customer_credit > 0 && !invoice_doc.is_return && redeem_customer_credit"
-        >
+        <v-row :class="{ 'rtl': isRTL }" class="pyments px-1 py-0"
+          v-if="invoice_doc && available_customer_credit > 0 && !invoice_doc.is_return && redeem_customer_credit">
           <v-col cols="7">
-            <v-text-field
-              density="compact"
-              variant="outlined"
-              disabled
-              color="primary"
-              :label="__('Redeemed Customer Credit')"
-              background-color="white"
-              hide-details
-              v-model="redeemed_customer_credit"
-              type="number"
-              :prefix="currencySymbol(invoice_doc.currency)"
-            />
+            <v-text-field density="compact" variant="outlined" disabled color="primary"
+              :label="__('Redeemed Customer Credit')" background-color="white" hide-details
+              v-model="redeemed_customer_credit" type="number" :prefix="currencySymbol(invoice_doc.currency)" />
           </v-col>
           <v-col cols="5">
-            <v-text-field
-              density="compact"
-              variant="outlined"
-              color="primary"
-              :label="__('You can redeem credit upto')"
-              background-color="white"
-              hide-details
-              :model-value="formtCurrency(available_customer_credit)"
-              :prefix="currencySymbol(invoice_doc.currency)"
-              disabled
-            />
+            <v-text-field density="compact" variant="outlined" color="primary" :label="__('You can redeem credit upto')"
+              background-color="white" hide-details :model-value="formtCurrency(available_customer_credit)"
+              :prefix="currencySymbol(invoice_doc.currency)" disabled />
           </v-col>
         </v-row>
         <v-divider></v-divider>
 
         <v-row :class="{ 'rtl': isRTL }" class="px-1 py-0">
           <v-col cols="6">
-            <v-text-field
-              density="compact"
-              variant="outlined"
-              color="primary"
-              :label="__('Net Total')"
-              background-color="white"
-              hide-details
-              :model-value="formtCurrency(invoice_doc.net_total)"
-              disabled
-              :prefix="currencySymbol(invoice_doc.currency)"
-            />
+            <v-text-field density="compact" variant="outlined" color="primary" :label="__('Net Total')"
+              background-color="white" hide-details :model-value="formtCurrency(invoice_doc.net_total)" disabled
+              :prefix="currencySymbol(invoice_doc.currency)" />
           </v-col>
           <v-col cols="6">
-            <v-text-field
-              density="compact"
-              variant="outlined"
-              color="primary"
-              :label="__('Tax and Charges')"
-              background-color="white"
-              hide-details
-              :model-value="formtCurrency(invoice_doc.total_taxes_and_charges)"
-              disabled
-              :prefix="currencySymbol(invoice_doc.currency)"
-            />
+            <v-text-field density="compact" variant="outlined" color="primary" :label="__('Tax and Charges')"
+              background-color="white" hide-details :model-value="formtCurrency(invoice_doc.total_taxes_and_charges)"
+              disabled :prefix="currencySymbol(invoice_doc.currency)" />
           </v-col>
           <v-col cols="6">
-            <v-text-field
-              density="compact"
-              variant="outlined"
-              color="primary"
-              :label="__('Total Amount')"
-              background-color="white"
-              hide-details
-              :model-value="formtCurrency(invoice_doc.total)"
-              disabled
-              :prefix="currencySymbol(invoice_doc.currency)"
-            />
+            <v-text-field density="compact" variant="outlined" color="primary" :label="__('Total Amount')"
+              background-color="white" hide-details :model-value="formtCurrency(invoice_doc.total)" disabled
+              :prefix="currencySymbol(invoice_doc.currency)" />
           </v-col>
           <v-col cols="6">
-            <v-text-field
-              density="compact"
-              variant="outlined"
-              color="primary"
-              :label="__('Discount Amount')"
-              background-color="white"
-              hide-details
-              :model-value="formtCurrency(invoice_doc.discount_amount)"
-              disabled
-              :prefix="currencySymbol(invoice_doc.currency)"
-            />
+            <v-text-field density="compact" variant="outlined" color="primary" :label="__('Discount Amount')"
+              background-color="white" hide-details :model-value="formtCurrency(invoice_doc.discount_amount)" disabled
+              :prefix="currencySymbol(invoice_doc.currency)" />
           </v-col>
           <v-col cols="6">
-            <v-text-field
-              density="compact"
-              variant="outlined"
-              color="primary"
-              :label="__('Grand Total')"
-              background-color="white"
-              hide-details
-              :model-value="formtCurrency(invoice_doc.grand_total)"
-              disabled
-              :prefix="currencySymbol(invoice_doc.currency)"
-            />
+            <v-text-field density="compact" variant="outlined" color="primary" :label="__('Grand Total')"
+              background-color="white" hide-details :model-value="formtCurrency(invoice_doc.grand_total)" disabled
+              :prefix="currencySymbol(invoice_doc.currency)" />
           </v-col>
           <v-col v-if="invoice_doc.rounded_total" cols="6">
-            <v-text-field
-              density="compact"
-              variant="outlined"
-              color="primary"
-              :label="__('Rounded Total')"
-              background-color="white"
-              hide-details
-              :model-value="formtCurrency(invoice_doc.rounded_total)"
-              disabled
-              :prefix="currencySymbol(invoice_doc.currency)"
-            />
+            <v-text-field density="compact" variant="outlined" color="primary" :label="__('Rounded Total')"
+              background-color="white" hide-details :model-value="formtCurrency(invoice_doc.rounded_total)" disabled
+              :prefix="currencySymbol(invoice_doc.currency)" />
           </v-col>
 
           <v-col cols="6" v-if="pos_profile.posa_allow_sales_order && invoiceType == 'Order'">
-            <DatePicker
-              :placeholder="__('Delivery Date')"
-              type="date"
-              model-type="format"
-              v-model="invoice_doc.posa_delivery_date"
-              :enable-time-picker="false"
-              :format="'yyyy-MM-dd'"
-              :teleport="'body'"
-              auto-apply
-            />
+            <DatePicker :placeholder="__('Delivery Date')" type="date" model-type="format"
+              v-model="invoice_doc.posa_delivery_date" :enable-time-picker="false" :format="'yyyy-MM-dd'"
+              :teleport="'body'" auto-apply />
           </v-col>
 
           <v-col cols="12" v-if="invoice_doc.posa_delivery_date">
-            <v-autocomplete
-              density="compact"
-              clearable
-              auto-select-first
-              variant="outlined"
-              color="primary"
-              :label="__('Address')"
-              v-model="invoice_doc.shipping_address_name"
-              :items="addresses"
-              item-title="address_title"
-              item-value="name"
-              background-color="white"
-              no-data-text="Address not found"
-              hide-details
-              :filter="addressFilter"
-              append-icon="mdi-plus"
-              @click:append="new_address"
-            >
+            <v-autocomplete density="compact" clearable auto-select-first variant="outlined" color="primary"
+              :label="__('Address')" v-model="invoice_doc.shipping_address_name" :items="addresses"
+              item-title="address_title" item-value="name" background-color="white" no-data-text="Address not found"
+              hide-details :filter="addressFilter" append-icon="mdi-plus" @click:append="new_address">
               <template v-slot:item="{ props, item }">
                 <v-list-item v-bind="props">
                   <v-list-item-title class="primary--text subtitle-1" v-html="item.address_title" />
@@ -310,19 +151,9 @@
           </v-col>
 
           <v-col cols="12" v-if="pos_profile.posa_display_additional_notes">
-            <v-textarea
-              class="pa-0"
-              variant="outlined"
-              density="compact"
-              background-color="white"
-              clearable
-              color="primary"
-              auto-grow
-              rows="2"
-              :label="__('Additional Notes')"
-              v-model="invoice_doc.posa_notes"
-              :model-value="invoice_doc.posa_notes"
-            />
+            <v-textarea class="pa-0" variant="outlined" density="compact" background-color="white" clearable
+              color="primary" auto-grow rows="2" :label="__('Additional Notes')" v-model="invoice_doc.posa_notes"
+              :model-value="invoice_doc.posa_notes" />
           </v-col>
         </v-row>
 
@@ -330,33 +161,18 @@
           <v-divider></v-divider>
           <v-row :class="{ 'rtl': isRTL }" class="px-1 py-0" justify="center" align="start">
             <v-col cols="6">
-              <v-text-field
-                v-model="invoice_doc.po_no"
-                :label="__('Purchase Order')"
-                variant="outlined"
-                density="compact"
-                background-color="white"
-                clearable
-                color="primary"
-                hide-details
-              />
+              <v-text-field v-model="invoice_doc.po_no" :label="__('Purchase Order')" variant="outlined"
+                density="compact" background-color="white" clearable color="primary" hide-details />
             </v-col>
             <v-col cols="6">
-              <v-menu ref="po_date_menu" v-model="po_date_menu" :close-on-content-click="false" transition="scale-transition">
+              <v-menu ref="po_date_menu" v-model="po_date_menu" :close-on-content-click="false"
+                transition="scale-transition">
                 <template v-slot:activator="{ on, attrs }">
-                  <v-text-field
-                    v-model="invoice_doc.po_date"
-                    :label="__('Purchase Order Date')"
-                    readonly
-                    variant="outlined"
-                    density="compact"
-                    hide-details
-                    v-bind="attrs"
-                    v-on="on"
-                    color="primary"
-                  />
+                  <v-text-field v-model="invoice_doc.po_date" :label="__('Purchase Order Date')" readonly
+                    variant="outlined" density="compact" hide-details v-bind="attrs" v-on="on" color="primary" />
                 </template>
-                <v-date-picker v-model="invoice_doc.po_date" no-title scrollable color="primary" @input="po_date_menu = false" />
+                <v-date-picker v-model="invoice_doc.po_date" no-title scrollable color="primary"
+                  @input="po_date_menu = false" />
               </v-menu>
             </v-col>
           </v-row>
@@ -377,73 +193,34 @@
           <v-col cols="6" v-if="is_credit_sale">
             <v-menu ref="date_menu" v-model="date_menu" :close-on-content-click="false" transition="scale-transition">
               <template v-slot:activator="{ props: { on, attrs } }">
-                <v-text-field
-                  v-model="invoice_doc.due_date"
-                  :label="__('Due Date')"
-                  readonly
-                  variant="outlined"
-                  density="compact"
-                  hide-details
-                  v-bind="attrs"
-                  v-on="on"
-                  color="primary"
-                />
+                <v-text-field v-model="invoice_doc.due_date" :label="__('Due Date')" readonly variant="outlined"
+                  density="compact" hide-details v-bind="attrs" v-on="on" color="primary" />
               </template>
-              <v-date-picker
-                v-model="invoice_doc.due_date"
-                :no-title="true"
-                scrollable
-                color="primary"
-                :min="frappe.datetime.now_date()
-                "
-                @update:model-value="date_menu = false"
-              />
+              <v-date-picker v-model="invoice_doc.due_date" :no-title="true" scrollable color="primary" :min="frappe.datetime.now_date()
+                " @update:model-value="date_menu = false" />
             </v-menu>
           </v-col>
           <v-col cols="6" v-if="!invoice_doc.is_return && pos_profile.use_customer_credit">
-            <v-switch
-              v-model="redeem_customer_credit"
-              flat
-              :label="__('Use Customer Credit')"
-              class="my-0 py-0"
-              @change="get_available_credit($event.target.value)"
-            />
+            <v-switch v-model="redeem_customer_credit" flat :label="__('Use Customer Credit')" class="my-0 py-0"
+              @change="get_available_credit($event.target.value)" />
           </v-col>
         </v-row>
 
-        <div
-          :class="{ 'rtl': isRTL }"
-          v-if="invoice_doc && available_customer_credit > 0 && !invoice_doc.is_return && redeem_customer_credit"
-        >
+        <div :class="{ 'rtl': isRTL }"
+          v-if="invoice_doc && available_customer_credit > 0 && !invoice_doc.is_return && redeem_customer_credit">
           <v-row v-for="(row, idx) in customer_credit_dict" :key="idx">
             <v-col cols="4">
               <div class="pa-2 py-3">{{ row.credit_origin }}</div>
             </v-col>
             <v-col cols="4">
-              <v-text-field
-                density="compact"
-                variant="outlined"
-                color="primary"
-                :label="__('Available Credit')"
-                background-color="white"
-                hide-details
-                :model-value="formtCurrency(row.total_credit)"
-                disabled
-                :prefix="currencySymbol(invoice_doc.currency)"
-              />
+              <v-text-field density="compact" variant="outlined" color="primary" :label="__('Available Credit')"
+                background-color="white" hide-details :model-value="formtCurrency(row.total_credit)" disabled
+                :prefix="currencySymbol(invoice_doc.currency)" />
             </v-col>
             <v-col cols="4">
-              <v-text-field
-                density="compact"
-                variant="outlined"
-                color="primary"
-                :label="__('Redeem Credit')"
-                background-color="white"
-                hide-details
-                type="number"
-                v-model="row.credit_to_redeem"
-                :prefix="currencySymbol(invoice_doc.currency)"
-              />
+              <v-text-field density="compact" variant="outlined" color="primary" :label="__('Redeem Credit')"
+                background-color="white" hide-details type="number" v-model="row.credit_to_redeem"
+                :prefix="currencySymbol(invoice_doc.currency)" />
             </v-col>
           </v-row>
         </div>
@@ -452,23 +229,10 @@
 
         <v-row :class="{ 'rtl': isRTL }" class="pb-0 mb-2" align="start">
           <v-col cols="12">
-            <v-autocomplete
-              density="compact"
-              clearable
-              auto-select-first
-              variant="outlined"
-              color="primary"
-              :label="__('Sales Person')"
-              v-model="sales_person"
-              :items="sales_persons"
-              item-title="sales_person_name"
-              item-value="name"
-              background-color="white"
-              :no-data-text="__('Sales Person not found')"
-              hide-details
-              :filter="salesPersonFilter"
-              :disabled="readonly"
-            >
+            <v-autocomplete density="compact" clearable auto-select-first variant="outlined" color="primary"
+              :label="__('Sales Person')" v-model="sales_person" :items="sales_persons" item-title="sales_person_name"
+              item-value="name" background-color="white" :no-data-text="__('Sales Person not found')" hide-details
+              :filter="salesPersonFilter" :disabled="readonly">
               <template v-slot:item="{ props, item }">
                 <v-list-item v-bind="props">
                   <v-list-item-title class="primary--text subtitle-1" v-html="item.sales_person_name" />
@@ -508,16 +272,8 @@
           </v-card-title>
           <v-card-text :class="{ 'rtl': isRTL }" class="pa-0">
             <v-container :class="{ 'rtl': isRTL }">
-              <v-text-field
-                density="compact"
-                variant="outlined"
-                color="primary"
-                :label="__('Mobile Number')"
-                background-color="white"
-                hide-details
-                v-model="invoice_doc.contact_mobile"
-                type="number"
-              />
+              <v-text-field density="compact" variant="outlined" color="primary" :label="__('Mobile Number')"
+                background-color="white" hide-details v-model="invoice_doc.contact_mobile" type="number" />
             </v-container>
           </v-card-text>
           <v-card-actions :class="{ 'rtl': isRTL }">
@@ -535,12 +291,7 @@
 
     <!-- إدخال رقم واتساب مع تحقق صحة -->
     <div :class="{ 'rtl': isRTL }">
-      <v-dialog
-        :class="{ 'rtl': isRTL }"
-        v-model="whastapp_mobile_dialog"
-        max-width="700px"
-        :key="dialogKey"
-      >
+      <v-dialog :class="{ 'rtl': isRTL }" v-model="whastapp_mobile_dialog" max-width="700px" :key="dialogKey">
         <v-card :class="{ 'rtl': isRTL }">
           <v-card-title :class="{ 'rtl': isRTL }">
             <span :class="{ 'rtl': isRTL }" class="headline primary--text">
@@ -549,18 +300,11 @@
           </v-card-title>
           <v-card-text :class="{ 'rtl': isRTL }" class="pa-0">
             <v-container :class="{ 'rtl': isRTL }">
-              <MobileGCCInput
-                v-model="invoice_doc.contact_mobile"
-                emitFormat="whatsapp"
-                :label="__('Mobile Number')"
-                density="compact"
-                color="primary"
-                variant="outlined"
-                :required="true"
-                @valid="whats_valid = $event"
-                @update:whats="onWhatsUpdate"
-              />
-              <div v-if="invoice_doc.contact_mobile && !whats_valid" class="text-caption mt-1" style="color: var(--v-theme-error);">
+              <MobileGCCInput v-model="invoice_doc.contact_mobile" emitFormat="whatsapp" :label="__('Mobile Number')" :defaultCountry="defualt_country"
+                density="compact" color="primary" variant="outlined" :required="true" @valid="whats_valid = $event"
+                @update:whats="onWhatsUpdate" />
+              <div v-if="invoice_doc.contact_mobile && !whats_valid" class="text-caption mt-1"
+                style="color: var(--v-theme-error);">
                 {{ __('Please enter a valid mobile number.') }}
               </div>
             </v-container>
@@ -570,22 +314,13 @@
             <v-btn :class="{ 'rtl': isRTL }" color="error" dark @click="whastapp_mobile_dialog = false">
               {{ __("Close") }}
             </v-btn>
-            <v-btn
-              :class="{ 'rtl': isRTL }"
-              v-show="!pos_profile.mandatory_mobile_number_in_whatsapp_dialog"
-              color="error"
-              dark
-              @click="ignoor_send_whastapp_mobile = true; whastapp_mobile_dialog = false; submit();"
-            >
+            <v-btn :class="{ 'rtl': isRTL }" v-show="!pos_profile.mandatory_mobile_number_in_whatsapp_dialog"
+              color="error" dark @click="ignoor_send_whastapp_mobile = true; whastapp_mobile_dialog = false; submit();">
               {{ __("تخطي الارسال") }}
             </v-btn>
-            <v-btn
-              :class="{ 'rtl': isRTL }"
-              color="primary"
-              dark
+            <v-btn :class="{ 'rtl': isRTL }" color="primary" dark
               :disabled="pos_profile.mandatory_mobile_number_in_whatsapp_dialog && !whats_valid"
-              @click="whastapp_mobile_dialog = false; submit();"
-            >
+              @click="whastapp_mobile_dialog = false; submit();">
               {{ __("Submit") }}
             </v-btn>
           </v-card-actions>
@@ -638,6 +373,7 @@ export default {
     whats_digits: "",
     // ✅ مفتاح لإعادة تركيب الدايالوج
     dialogKey: 0,
+    defualt_country: ""
   }),
 
   components: {
@@ -1204,7 +940,7 @@ export default {
   mounted() {
     this.fetchUserLanguage();
     this.$nextTick(function () {
-      evntBus.on("send_invoice_doc_payment", (invoice_doc) => {
+      evntBus.on("send_invoice_doc_payment",async (invoice_doc) => {
         this.invoice_doc = invoice_doc;
         this.prev_contact_mobile = (this.invoice_doc?.contact_mobile || "").toString();
         // ✅ إعادة تهيئة حالة الدايلوج لكل عملية
@@ -1229,6 +965,12 @@ export default {
         this.loyalty_amount = 0;
         this.get_addresses();
         this.get_sales_person_names();
+        if (this.pos_profile?.defualt_country) {
+          var defualt_country = await frappe.db.get_value("Country", this.pos_profile?.defualt_country, "code");
+          console.log(defualt_country)
+          if (defualt_country?.message?.code)
+            this.defualt_country = defualt_country?.message?.code.toLocaleUpperCase();
+        }
       });
       evntBus.on("register_pos_profile", (data) => {
         this.pos_profile = data.pos_profile;
@@ -1309,7 +1051,7 @@ export default {
     is_write_off_change(value) {
       if (value == 1) {
         this.invoice_doc.write_off_amount = this.diff_payment;
-      this.invoice_doc.write_off_outstanding_amount_automatically = 1;
+        this.invoice_doc.write_off_outstanding_amount_automatically = 1;
       } else {
         this.invoice_doc.write_off_amount = 0;
         this.invoice_doc.write_off_outstanding_amount_automatically = 0;

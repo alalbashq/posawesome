@@ -81,24 +81,26 @@
 import { ref, computed, watch, onMounted } from "vue";
 
 const props = defineProps({
-  modelValue: { type: String, default: "" },   // القيمة الخارجة/الداخلة عبر v-model
+  modelValue: { type: String, default: "" },   // v-model (whatsapp/local/e164 حسب emitFormat)
   label:      { type: String, default: "رقم الجوال" },
   density:    { type: String, default: "compact" },
   color:      { type: String, default: "primary" },
   variant:    { type: String, default: "outlined" },
   required:   { type: Boolean, default: false },
-  // local  : تُخرج الرقم المحلي كما كتبه المستخدم (SA/AE: 9 أرقام تبدأ بـ5)
-  // whatsapp: تُخرج أرقام فقط مع كود الدولة بدون + (الافتراضي)
-  // e164   : تُخرج +CC… (مثل +9665XXXXXXX)
-  emitFormat: { type: String, default: "whatsapp" },
-  // "cdn" لاستخدام flagcdn، أو "local" لاستخدام ملفاتك داخل /assets/posawesome/flags/
-  flagSource: { type: String, default: "cdn" }
+  emitFormat: { type: String, default: "whatsapp" }, // whatsapp | e164 | local
+  flagSource: { type: String, default: "cdn" },
+
+  // NEW: تعيين الدولة الافتراضية
+  // يمكن تمرير "SA" أو "966" أو كائن من مصفوفة GCC { iso:'SA', ... }
+  defaultCountry: { type: [String, Object], default: "SA" },
+
+  // NEW: دعم v-model:country من الأب (لو رغبت بالتحكم الكامل)
+  country: { type: String, default: "" },
 });
 
 const emit = defineEmits(["update:modelValue", "valid", "update:country", "update:whats"]);
 
 const GCC = [
-  // أمثلة بدون صفر أولي
   { iso: "SA", name: "السعودية", flag: "sa", cc: "966", example: "مثال: 559443354", expectedLen: 9, pattern: /^5\d{8}$/ },
   { iso: "AE", name: "الإمارات", flag: "ae", cc: "971", example: "مثال: 501234567", expectedLen: 9, pattern: /^5\d{8}$/ },
   { iso: "KW", name: "الكويت",   flag: "kw", cc: "965", example: "مثال: 51234567",  expectedLen: 8, pattern: /^(5|6|9)\d{7}$/ },
@@ -107,22 +109,41 @@ const GCC = [
   { iso: "OM", name: "عُمان",    flag: "om", cc: "968", example: "مثال: 91234567",  expectedLen: 8, pattern: /^9\d{7}$/ },
 ];
 
+// NEW: دالة تحلّ الدولة من ISO أو CC أو كائن
+function resolveCountry(input) {
+  if (!input) return null;
+  if (typeof input === "object" && input.iso) {
+    const iso = String(input.iso).toUpperCase();
+    return GCC.find(c => c.iso === iso) || null;
+  }
+  const s = String(input).trim();
+  // إذا كانت أرقام: نفترض أنها كود دولة (cc)
+  if (/^\d+$/.test(s)) {
+    return GCC.find(c => c.cc === s) || null;
+  }
+  // غير ذلك: ISO
+  const iso = s.toUpperCase();
+  return GCC.find(c => c.iso === iso) || null;
+}
+
 const initializing = ref(true);
-const selectedCountry = ref(GCC[0]);
+
+// NEW: نختار الدولة من props.country ثم defaultCountry ثم SA
+const initialCountry =
+  resolveCountry(props.country) ||
+  resolveCountry(props.defaultCountry) ||
+  GCC[0];
+
+const selectedCountry = ref(initialCountry);
 const local           = ref(""); // الرقم المحلي بدون صفر
 
-// ====== أعلام الدول (SVG + فول-باك محلي) ======
+// ====== أعلام الدول ======
 const flagSrc = (iso) => {
   const code = (iso || "").toLowerCase();
-  if (props.flagSource === "local") {
-    // ضع ملفاتك هنا: public/assets/posawesome/flags/sa.svg ...الخ
-    return `/assets/posawesome/flags/${code}.svg`;
-  }
-  // SVG واضح ولا يعتمد على الخط (لا إيموجي)
+  if (props.flagSource === "local") return `/assets/posawesome/flags/${code}.svg`;
   return `https://cdn.jsdelivr.net/npm/flag-icons/flags/4x3/${code}.svg`;
 };
 
-// جرّب CDN بديل ثم محلي إذا فشل التحميل
 const onFlagError = (e, iso) => {
   const code = (iso || "").toLowerCase();
   const tried = e.target.getAttribute("data-tried") || "";
@@ -131,7 +152,6 @@ const onFlagError = (e, iso) => {
     e.target.src = `https://cdn.jsdelivr.net/npm/flag-icons/flags/4x3/${code}.svg`;
     return;
   }
-  // فول-باك محلي
   e.target.src = `/assets/posawesome/flags/${code}.svg`;
 };
 
@@ -140,20 +160,17 @@ const digits = (v) => (v || "").toString().replace(/\D+/g, "");
 const expectedLen = computed(() => selectedCountry.value?.expectedLen || undefined);
 const placeholder = computed(() => selectedCountry.value?.example || "");
 
-// صحة/اكتمال الرقم حسب الدولة
 const isComplete = computed(() => {
   const rx = selectedCountry.value?.pattern;
   return rx ? rx.test(local.value) : !!local.value;
 });
 
-// واتساب: cc + local (بدون +)
 const whatsappDigits = computed(() => {
   if (!isComplete.value) return "";
   const cc = selectedCountry.value?.cc || "";
   return cc + local.value;
 });
 
-// ناتج v-model بحسب emitFormat
 const modelOut = computed(() => {
   if (props.emitFormat === "whatsapp") return isComplete.value ? whatsappDigits.value : "";
   if (props.emitFormat === "e164")     return isComplete.value ? ("+" + whatsappDigits.value) : "";
@@ -168,12 +185,30 @@ watch([modelOut, isComplete, selectedCountry, whatsappDigits], () => {
   emit("update:whats", whatsappDigits.value);
 });
 
-// تهيئة من قيمة موجودة أو تغيّر خارجي
+// ====== تهيئة ======
 onMounted(() => {
-  rehydrateFromValue(props.modelValue);
+  if (props.modelValue) {
+    rehydrateFromValue(props.modelValue);
+  } else {
+    // NEW: بدون قيمة حالية، طبّق الدولة الافتراضية المحسوبة
+    selectedCountry.value =
+      resolveCountry(props.country) ||
+      resolveCountry(props.defaultCountry) ||
+      GCC[0];
+    local.value = ""; // ينتظر إدخال المستخدم
+  }
   initializing.value = false;
 });
 
+// NEW: لو تغيّرت قيمة country من الأب ولم يكتب المستخدم رقمًا بعد، غيّر الدولة
+watch(() => props.country, (nv) => {
+  const next = resolveCountry(nv);
+  if (next && !local.value) {
+    selectedCountry.value = next;
+  }
+});
+
+// تزامن مع تغيّر modelValue الخارجي
 watch(() => props.modelValue, (nv, ov) => {
   if (nv === ov) return;
   initializing.value = true;
@@ -181,7 +216,7 @@ watch(() => props.modelValue, (nv, ov) => {
   initializing.value = false;
 });
 
-// —— دالة إعادة التحليل من قيمة (واتساب/محلي) —— //
+// —— إعادة التحليل من قيمة واردة —— //
 function rehydrateFromValue(input) {
   let v = digits(input);
   if (!v) {
@@ -195,7 +230,7 @@ function rehydrateFromValue(input) {
     selectedCountry.value = byCC;
     let rest = v.slice(byCC.cc.length);
 
-    // دعم صيغ قديمة: 05xxxxxxxx → احذف الصفر
+    // SA/AE: دعم 05xxxxxxxx → احذف الصفر الأول
     if ((byCC.iso === "SA" || byCC.iso === "AE") && /^0?5\d{8}$/.test(rest)) {
       rest = rest.replace(/^0/, "");
     }
@@ -207,11 +242,11 @@ function rehydrateFromValue(input) {
     return;
   }
 
-  // قيمة محلية: حدّد الدولة بالأنماط والأطوال
+  // قيمة محلية: حاول الاستدلال بالدولة
   for (const c of GCC) {
     let candidate = v;
 
-    // SA/AE: 05xxxxxxxx → احذف الصفر إن وُجد
+    // SA/AE: 05xxxxxxxx → احذف الصفر
     if ((c.iso === "SA" || c.iso === "AE") && /^0?5\d{8}$/.test(candidate)) {
       candidate = candidate.replace(/^0/, "");
     }
@@ -226,7 +261,7 @@ function rehydrateFromValue(input) {
     }
   }
 
-  // لم تُطابق أي دولة: خزّنها كما هي (سيظهر تحذير اكتمال)
+  // fallback
   local.value = v;
 }
 
@@ -247,6 +282,6 @@ const rules = {
   background: var(--v-theme-surface);
 }
 .w-flag-picker :deep(.v-field__input) {
-  padding-inline: 6px !important; /* تضييق الحقل لأننا نعرض علماً فقط */
+  padding-inline: 6px !important;
 }
 </style>
