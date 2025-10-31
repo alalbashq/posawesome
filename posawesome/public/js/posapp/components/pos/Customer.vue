@@ -21,8 +21,7 @@
     >
       <template #item="{ props, item }">
         <v-list-item v-bind="props">
-          <v-list-item-title class="primary--text subtitle-1">
-            
+          <v-list-item-title class="primary--text subtitle-1">            
             <span v-if="displayPhone(item)">{{ displayPhone(item) }}</span>
           </v-list-item-title>
         </v-list-item>
@@ -31,7 +30,7 @@
       <template #selection="{ item }">
         <span>
          
-          <span v-if="displayPhone(item)">{{ displayPhone(item) }}</span>
+          <span v-if="displaySelectionCustomer(item)">{{ displaySelectionCustomer(item) }}</span>
         </span>
       </template>
     </v-autocomplete>
@@ -67,6 +66,12 @@ export default {
         raw.mobile_no ||
         raw.phone ||
         raw.mobile        
+      );
+    },
+    displaySelectionCustomer(item) {
+      const raw = item?.raw || item || {};
+      return (
+        raw.name         
       );
     },
 
