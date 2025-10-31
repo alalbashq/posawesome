@@ -48,10 +48,6 @@
         </v-row>
       </v-col>
 
-
-
-
-
       <!-- <v-col cols="9"> -->
       <v-col cols="12" lg="9">
         <v-card
@@ -78,6 +74,9 @@
                 :placeholder="__('Search Items')"
                 @keydown.esc="esc_event"
                 @keydown.enter="search_onchange"
+                @keydown.update="search_onchange"
+                @update:modelValue="search_onchange"
+                @keyup="search_onchange"
                 ref="debounce_search"
                 class="custom-search-field"
                 style="margin-top: 2px;"
@@ -85,7 +84,6 @@
                 @focus="e => e.target.select()"
               ></v-text-field>
             </v-col>
-
 
             <v-col cols="3" class="mb-4" v-if="pos_profile.posa_input_qty">
               <v-text-field
@@ -194,8 +192,6 @@
                         <div>
                           <p><strong>{{ __('Main Warehouse') }}:</strong> {{ selectedItem.main_warehouse }}</p>
                           <p><strong>{{ __('Available QTY') }}:</strong> <span :style="{ color: selectedItem.actual_qty > 0 ? 'rgba(0, 230, 0, 1)' : 'rgba(255, 0, 0, 1)', fontSize: '17px', fontWeight: 'bold'}">{{ selectedItem.actual_qty }}</span></p>
-                          <!-- <p><strong>المخزن الرئيسي:</strong> {{ selectedItem.main_warehouse }}</p>
-                          <p><strong>الكمية المتاحة:</strong> <span :style="{ color: selectedItem.actual_qty > 0 ? 'rgba(0, 230, 0, 1)' : 'rgba(255, 0, 0, 1)', fontSize: '17px', fontWeight: 'bold'}">{{ selectedItem.actual_qty }}</span></p> -->
                         </div>
                         <div>
                           <p><strong>{{ __('Item Group') }}:</strong> {{ selectedItem.item_group }}</p>
@@ -216,8 +212,6 @@
                         </tbody>
                       </v-table>
 
-
-
                       <div style="display: ruby;">
                         <h3 style="margin-bottom: 0; margin-top: 20px;">{{ __('Total Quantity') }}: 
                           <span :style="{ color: selectedItem.total_qty > 0 ? 'rgba(0, 230, 0, 1)' : 'rgba(255, 0, 0, 1)'}">
@@ -234,8 +228,6 @@
                   </v-card>
                 </v-dialog>
               </div>
-
-
 
               <div fluid class="items" v-if="items_view == 'list'">
                 <div class="my-0 py-0 overflow-y-auto" style="max-height: 65vh">
@@ -349,6 +341,7 @@ export default {
     new_line: false,
     qty: 1,
     fetched_batch_no: null,
+    cart_items: [], // [ADDED] مصفوفة تمثل عناصر السلة الحالية
   }),
   
 
@@ -384,18 +377,15 @@ export default {
       return 'rgba(255, 0, 0, 0.3)';
     },
 
-
     openDialog(item) {
       this.selectedItem = item;
       this.dialog = true;
     },
-
     
     handleGroupChange(item) {
       this.item_group = item;
       this.search_onchange(); 
     },
-
     
     show_offers() {
       evntBus.emit("show_offers", "true");
@@ -472,7 +462,6 @@ export default {
       });
     },
 
-
     get_items_groups() {
       if (!this.pos_profile) {
         console.log("No POS Profile");
@@ -506,9 +495,6 @@ export default {
 
       this.items_group = ["ALL", ...Array.from(uniqueGroups)];
     },
-
-
-
 
     getItmesHeaders() {
       const items_headers = [
@@ -545,6 +531,9 @@ export default {
         }
         evntBus.emit("add_item", item);
         this.qty = 1;
+
+        // [ADDED] حدّث مؤشر السلة المحلي احتياطيًا
+        this.cart_items.push({ item_code: item.item_code, batch_no: item.batch_no || null });
       }
     },
     add_item(item) {
@@ -557,6 +546,9 @@ export default {
         }
         evntBus.emit("add_item", item);
         this.qty = 1;
+
+        // [ADDED] حدّث مؤشر السلة المحلي احتياطيًا
+        this.cart_items.push({ item_code: item.item_code, batch_no: item.batch_no || null });
       }
     },
 
@@ -571,7 +563,9 @@ export default {
       new_item.qty = flt(qty);
 
       let isBarcodeSearch = false;
+      let isItemCodeSearch = false; // [ADDED] فلاغ لمطابقة كود الصنف
 
+      // مطابقة بالباركود
       new_item.item_barcode.forEach((element) => {
         if (this.search == element.barcode) {
           new_item.uom = element.posa_uom;
@@ -584,6 +578,15 @@ export default {
         }
       });
 
+      // [ADDED] مطابقة مباشرة على كود الصنف
+      if (
+        this.search &&
+        new_item.item_code &&
+        this.search.toLowerCase() === new_item.item_code.toLowerCase()
+      ) {
+        match = true;
+        isItemCodeSearch = true;
+      }
 
       if (
         !new_item.to_set_serial_no &&
@@ -617,16 +620,27 @@ export default {
                   };
 
                   this.$nextTick(() => {
-                    const existingItem = this.items.find(
+                    let existingItem;
+
+                    // (الأسطر القديمة تبقى كما هي)
+                    existingItem = this.items.find(
                       (item) =>
                         item.item_code === filtered_item.item_code &&
                         item.batch_no === fetched_batch_no
                     );
 
+                    // [FIX] بدّل الفحص إلى عناصر السلة بدل الكتالوج
+                    const existingItem_cart = (this.cart_items || []).find(
+                      (item) =>
+                        item.item_code === filtered_item.item_code &&
+                        (item.batch_no || null) === fetched_batch_no
+                    );
+                    if (existingItem_cart) existingItem = existingItem_cart;
+
                     if (!existingItem) {
                       this.add_item(filtered_item);
                     } else {
-                      console.log("Item already exist!");
+                      console.log("This item is duplicate!");
                     }
 
                     this.reset_search_fields();
@@ -663,7 +677,8 @@ export default {
       if (match) {
         let existingItem;
 
-        if (isBarcodeSearch) {
+        // (الأسطر الأصلية تبقى كما هي)
+        if (isBarcodeSearch || isItemCodeSearch) {
           existingItem = this.items.find(item => item.item_code === new_item.item_code);
         } else {
           existingItem = this.items.find(
@@ -673,8 +688,15 @@ export default {
           );
         }
 
+        // [FIX] فحص سلة المبيعات بدل الكتالوج
+        const existingItem_cart = (this.cart_items || []).find(
+          (item) =>
+            item.item_code === new_item.item_code &&
+            ((item.batch_no || null) === (new_item.batch_no || null))
+        );
+        if (existingItem_cart) existingItem = existingItem_cart;
 
-        if (!existingItem || isBarcodeSearch) {
+        if (!existingItem || isBarcodeSearch || isItemCodeSearch) {
           this.add_item(new_item);
         } else {
           console.log("This item is duplicate!");
@@ -693,7 +715,6 @@ export default {
       this.qty = 1;
       this.$refs.debounce_search.focus();
     },
-
 
     search_onchange() {
       const vm = this;
@@ -771,16 +792,14 @@ export default {
       });
     },
 
-
     update_cur_items_details() {
       this.update_items_details(this.filtred_items);
     },
 
-
     scan_barcoud() {
       const vm = this;
       onScan.attachTo(document, {
-        suffixKeyCodes: [],
+        suffixKeyCodes: [], // <-- دخول إنتر غير مطلوب
         keyCodeMapper: function (oEvent) {
           oEvent.stopImmediatePropagation();
           return onScan.decodeKeyEvent(oEvent);
@@ -793,6 +812,11 @@ export default {
       });
     },
     trigger_onscan(sCode) {
+      this.first_search = sCode;
+      this.debounce_search = sCode;
+      this.search = sCode;
+      this.search_onchange();
+
       if (this.filtred_items.length == 0) {
         evntBus.emit("show_mesage", {
           text: `No Item has this barcode "${sCode}"`,
@@ -810,7 +834,6 @@ export default {
       const wordCount = words.length;
       const combinations = [];
 
-      // Helper function to generate all permutations
       function permute(arr, m = []) {
         if (arr.length === 0) {
           combinations.push(m.join(" "));
@@ -978,7 +1001,7 @@ export default {
       },
       set: _.debounce(function (newValue) {
         this.first_search = newValue;
-      }, 200),
+      }, 50),
     },
   },
 
@@ -992,6 +1015,18 @@ export default {
         ? "card"
         : "list";
     });
+
+    // [ADDED] التقط تغييرات السلة من مكونات أخرى إن وُجدت
+    evntBus.on("cart_items_updated", (items) => {
+      this.cart_items = items || [];
+    });
+    evntBus.on("cart_changed", (items) => {
+      this.cart_items = items || [];
+    });
+    evntBus.on("set_cart_items", (items) => {
+      this.cart_items = items || [];
+    });
+
     evntBus.on("update_cur_items_details", () => {
       this.update_cur_items_details();
     });
@@ -1095,8 +1130,6 @@ export default {
   max-width: 1px;
   background-color: black;
 }
-
-
 
 /* RTL Style */
 .rtl {
